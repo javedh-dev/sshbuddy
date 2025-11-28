@@ -19,7 +19,7 @@ type FormModel struct {
 }
 
 func NewFormModel() FormModel {
-	var inputs []textinput.Model = make([]textinput.Model, 5)
+	var inputs []textinput.Model = make([]textinput.Model, 7)
 
 	inputs[0] = textinput.New()
 	inputs[0].Placeholder = "Alias"
@@ -43,12 +43,22 @@ func NewFormModel() FormModel {
 	inputs[3].Width = 30
 
 	inputs[4] = textinput.New()
-	inputs[4].Placeholder = "Tags (comma separated)"
-	inputs[4].CharLimit = 50
+	inputs[4].Placeholder = "Identity File (optional)"
+	inputs[4].CharLimit = 100
 	inputs[4].Width = 30
 
+	inputs[5] = textinput.New()
+	inputs[5].Placeholder = "Proxy Jump (optional)"
+	inputs[5].CharLimit = 50
+	inputs[5].Width = 30
+
+	inputs[6] = textinput.New()
+	inputs[6].Placeholder = "Tags (comma separated)"
+	inputs[6].CharLimit = 50
+	inputs[6].Width = 30
+
 	return FormModel{
-		inputs: inputs,
+		inputs:  inputs,
 		focused: 0,
 	}
 }
@@ -56,18 +66,20 @@ func NewFormModel() FormModel {
 func NewFormModelWithHost(host model.Host) FormModel {
 	fm := NewFormModel()
 	fm.isEditing = true
-	
+
 	// Pre-fill with existing host data
 	fm.inputs[0].SetValue(host.Alias)
 	fm.inputs[1].SetValue(host.Hostname)
 	fm.inputs[2].SetValue(host.User)
 	fm.inputs[3].SetValue(host.Port)
-	
+	fm.inputs[4].SetValue(host.IdentityFile)
+	fm.inputs[5].SetValue(host.ProxyJump)
+
 	// Convert tags array to comma-separated string
 	if len(host.Tags) > 0 {
-		fm.inputs[4].SetValue(strings.Join(host.Tags, ", "))
+		fm.inputs[6].SetValue(strings.Join(host.Tags, ", "))
 	}
-	
+
 	return fm
 }
 
@@ -137,7 +149,9 @@ func (m FormModel) View() string {
 		{"Hostname", m.inputs[1]},
 		{"User", m.inputs[2]},
 		{"Port", m.inputs[3]},
-		{"Tags", m.inputs[4]},
+		{"Identity File", m.inputs[4]},
+		{"Proxy Jump", m.inputs[5]},
+		{"Tags", m.inputs[6]},
 	}
 	
 	for i, field := range fields {
@@ -179,7 +193,7 @@ func (m FormModel) View() string {
 func (m FormModel) GetHost() model.Host {
 	// Parse tags from comma-separated string
 	var tags []string
-	tagsInput := strings.TrimSpace(m.inputs[4].Value())
+	tagsInput := strings.TrimSpace(m.inputs[6].Value())
 	if tagsInput != "" {
 		tagsParts := strings.Split(tagsInput, ",")
 		for _, tag := range tagsParts {
@@ -189,13 +203,16 @@ func (m FormModel) GetHost() model.Host {
 			}
 		}
 	}
-	
+
 	return model.Host{
-		Alias:    m.inputs[0].Value(),
-		Hostname: m.inputs[1].Value(),
-		User:     m.inputs[2].Value(),
-		Port:     m.inputs[3].Value(),
-		Tags:     tags,
+		Alias:        m.inputs[0].Value(),
+		Hostname:     m.inputs[1].Value(),
+		User:         m.inputs[2].Value(),
+		Port:         m.inputs[3].Value(),
+		IdentityFile: strings.TrimSpace(m.inputs[4].Value()),
+		ProxyJump:    strings.TrimSpace(m.inputs[5].Value()),
+		Tags:         tags,
+		Source:       "manual",
 	}
 }
 

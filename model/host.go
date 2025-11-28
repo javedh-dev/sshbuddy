@@ -7,11 +7,14 @@ import (
 )
 
 type Host struct {
-	Alias    string   `json:"alias"`
-	Hostname string   `json:"hostname"`
-	User     string   `json:"user"`
-	Port     string   `json:"port"`
-	Tags     []string `json:"tags"`
+	Alias        string   `json:"alias"`
+	Hostname     string   `json:"hostname"`
+	User         string   `json:"user"`
+	Port         string   `json:"port"`
+	Tags         []string `json:"tags"`
+	IdentityFile string   `json:"identity_file,omitempty"` // Path to SSH key
+	ProxyJump    string   `json:"proxy_jump,omitempty"`    // ProxyJump host
+	Source       string   `json:"source,omitempty"`        // "config" or "manual"
 }
 
 type Config struct {

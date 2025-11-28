@@ -29,7 +29,21 @@ func ExecuteSSH(host model.Host) error {
 	}
 
 	var args []string
+	
+	// Add port
 	args = append(args, "-p", port)
+	
+	// Add identity file if specified
+	if host.IdentityFile != "" {
+		args = append(args, "-i", host.IdentityFile)
+	}
+	
+	// Add proxy jump if specified
+	if host.ProxyJump != "" {
+		args = append(args, "-J", host.ProxyJump)
+	}
+	
+	// Add host
 	args = append(args, fmt.Sprintf("%s@%s", host.User, host.Hostname))
 
 	cmd := exec.Command("ssh", args...)

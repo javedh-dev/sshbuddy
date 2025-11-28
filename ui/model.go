@@ -175,101 +175,116 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		
 		if m.state == stateList {
-			switch msg.String() {
-			case "t":
-				// Cycle through themes
-				themeNames := GetThemeNames()
-				currentThemeName := m.config.Theme
-				if currentThemeName == "" {
-					currentThemeName = "purple"
-				}
-				
-				// Find current theme index and move to next
-				currentIdx := 0
-				for i, name := range themeNames {
-					if name == currentThemeName {
-						currentIdx = i
-						break
+			// Check if we're in search/filter mode - if so, only allow escape and let list handle other keys
+			filterState := m.list.FilterState()
+			isSearching := filterState == list.Filtering
+			
+			// Only process shortcuts when NOT in search mode
+			if !isSearching {
+				switch msg.String() {
+				case "t":
+					// Cycle through themes
+					themeNames := GetThemeNames()
+					currentThemeName := m.config.Theme
+					if currentThemeName == "" {
+						currentThemeName = "purple"
 					}
-				}
-				
-				nextIdx := (currentIdx + 1) % len(themeNames)
-				newTheme := themeNames[nextIdx]
-				
-				// Apply and save theme
-				ApplyTheme(newTheme)
-				m.config.Theme = newTheme
-				storage.SaveConfig(m.config)
-				
-				// Force refresh of list to apply new colors
-				m.refreshList()
-				return m, nil
-			case "n":
-				m.state = stateForm
-				m.form = NewFormModel() // Reset form
-				m.editingIndex = -1     // -1 means adding new
-				return m, m.form.Init()
-			case "p":
-				// Ping all servers - mark all as pinging
-				for _, h := range m.config.Hosts {
-					key := GetHostKey(h)
-					m.pinging[key] = true
-				}
-				m.refreshList()
-				return m, StartPingAll(m.config.Hosts)
-			case "enter":
-				// Connect to selected host
-				if selectedItem, ok := m.list.SelectedItem().(item); ok {
-					// Return a command that will execute SSH after quitting
-					return m, func() tea.Msg {
-						return ConnectMsg{Host: selectedItem.host}
+					
+					// Find current theme index and move to next
+					currentIdx := 0
+					for i, name := range themeNames {
+						if name == currentThemeName {
+							currentIdx = i
+							break
+						}
 					}
-				}
-			case "left":
-				// Move left in row-wise layout (decrement by 1 if on odd index)
-				currentIdx := m.list.Index()
-				if currentIdx%2 == 1 { // If on right column
-					m.list.Select(currentIdx - 1)
-				}
-				return m, nil
-			case "right":
-				// Move right in row-wise layout (increment by 1 if on even index)
-				currentIdx := m.list.Index()
-				totalItems := len(m.list.Items())
-				if currentIdx%2 == 0 && currentIdx+1 < totalItems { // If on left column
-					m.list.Select(currentIdx + 1)
-				}
-				return m, nil
-			case "e":
-				// Edit selected host
-				if selectedItem, ok := m.list.SelectedItem().(item); ok {
+					
+					nextIdx := (currentIdx + 1) % len(themeNames)
+					newTheme := themeNames[nextIdx]
+					
+					// Apply and save theme
+					ApplyTheme(newTheme)
+					m.config.Theme = newTheme
+					storage.SaveConfig(m.config)
+					
+					// Force refresh of list to apply new colors
+					m.refreshList()
+					return m, nil
+				case "n":
 					m.state = stateForm
-					m.form = NewFormModelWithHost(selectedItem.host)
-					m.editingIndex = m.list.Index()
+					m.form = NewFormModel() // Reset form
+					m.editingIndex = -1     // -1 means adding new
 					return m, m.form.Init()
-				}
-			case "c":
-				// Duplicate selected host
-				if selectedItem, ok := m.list.SelectedItem().(item); ok {
-					m.state = stateForm
-					duplicatedHost := selectedItem.host
-					// Append " (copy)" to the alias to avoid duplicates
-					duplicatedHost.Alias = duplicatedHost.Alias + " (copy)"
-					m.form = NewFormModelWithHost(duplicatedHost)
-					m.editingIndex = -1 // -1 means adding new (not editing)
-					return m, m.form.Init()
-				}
-			case "d", "delete":
-				// Show delete confirmation
-				if selectedItem, ok := m.list.SelectedItem().(item); ok {
+				case "p":
+					// Ping all servers - mark all as pinging
+					for _, h := range m.config.Hosts {
+						key := GetHostKey(h)
+						m.pinging[key] = true
+					}
+					m.refreshList()
+					return m, StartPingAll(m.config.Hosts)
+				case "enter":
+					// Connect to selected host
+					if selectedItem, ok := m.list.SelectedItem().(item); ok {
+						// Return a command that will execute SSH after quitting
+						return m, func() tea.Msg {
+							return ConnectMsg{Host: selectedItem.host}
+						}
+					}
+				case "left":
+					// Move left in row-wise layout (decrement by 1 if on odd index)
 					currentIdx := m.list.Index()
-					if currentIdx >= 0 && currentIdx < len(m.config.Hosts) {
-						m.deleteConfirmHost = &selectedItem.host
-						m.deleteConfirmIdx = currentIdx
-						m.state = stateConfirmDelete
+					if currentIdx%2 == 1 { // If on right column
+						m.list.Select(currentIdx - 1)
 					}
+					return m, nil
+				case "right":
+					// Move right in row-wise layout (increment by 1 if on even index)
+					currentIdx := m.list.Index()
+					totalItems := len(m.list.Items())
+					if currentIdx%2 == 0 && currentIdx+1 < totalItems { // If on left column
+						m.list.Select(currentIdx + 1)
+					}
+					return m, nil
+				case "e":
+					// Edit selected host (only if not from SSH config)
+					if selectedItem, ok := m.list.SelectedItem().(item); ok {
+						if selectedItem.host.Source == "ssh-config" {
+							// Cannot edit SSH config hosts
+							return m, nil
+						}
+						m.state = stateForm
+						m.form = NewFormModelWithHost(selectedItem.host)
+						m.editingIndex = m.list.Index()
+						return m, m.form.Init()
+					}
+				case "c":
+					// Duplicate selected host
+					if selectedItem, ok := m.list.SelectedItem().(item); ok {
+						m.state = stateForm
+						duplicatedHost := selectedItem.host
+						// Append " (copy)" to the alias to avoid duplicates
+						duplicatedHost.Alias = duplicatedHost.Alias + " (copy)"
+						m.form = NewFormModelWithHost(duplicatedHost)
+						m.editingIndex = -1 // -1 means adding new (not editing)
+						return m, m.form.Init()
+					}
+				case "d", "delete":
+					// Show delete confirmation (only if not from SSH config)
+					if selectedItem, ok := m.list.SelectedItem().(item); ok {
+						if selectedItem.host.Source == "ssh-config" {
+							// Cannot delete SSH config hosts
+							return m, nil
+						}
+						currentIdx := m.list.Index()
+						if currentIdx >= 0 && currentIdx < len(m.config.Hosts) {
+							m.deleteConfirmHost = &selectedItem.host
+							m.deleteConfirmIdx = currentIdx
+							m.state = stateConfirmDelete
+						}
+					}
+					return m, nil
 				}
-				return m, nil
 			}
 		} else if m.state == stateForm {
 			if msg.String() == "esc" {

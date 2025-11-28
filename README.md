@@ -55,6 +55,8 @@ Download the latest release from the [releases page](https://github.com/javedh-d
 - 📋 **2-column layout** - View more hosts at once with row-wise display
 - 📝 **Duplicate hosts** - Quickly copy existing configurations
 - 🏷️ **Host tagging** - Organize hosts with custom tags
+- 🔧 **SSH config integration** - Automatically loads hosts from `~/.ssh/config`
+- 🔑 **Multiple auth methods** - Support for SSH keys, ProxyJump, and more
 - ✨ **Beautiful, modern UI** - Clean and intuitive interface
 - ⚡ **Fast and responsive** - Instant feedback and smooth navigation
 - 🔍 **Built-in search** - Filter hosts on the fly
@@ -120,9 +122,23 @@ SSH Buddy stores its configuration in:
 - **Respects XDG_CONFIG_HOME**: If set, uses `$XDG_CONFIG_HOME/sshbuddy/config.json`
 
 The config file is automatically created on first run and includes:
-- Host configurations (alias, hostname, user, port, tags)
+- Host configurations (alias, hostname, user, port, tags, identity file, proxy jump)
 - Theme preference
 - All settings are validated on load
+
+### SSH Config Integration
+
+SSH Buddy automatically reads hosts from your `~/.ssh/config` file! Hosts from SSH config are:
+- Automatically loaded and displayed alongside manual hosts
+- Tagged with `ssh-config` for easy identification
+- **Read-only** - edit them in your SSH config file, not in SSH Buddy
+- Support advanced SSH features like:
+  - Identity files (SSH keys)
+  - ProxyJump (bastion hosts)
+  - Custom ports
+  - And more!
+
+Manual hosts take precedence over SSH config hosts with the same alias.
 
 ### Example Config
 
@@ -134,7 +150,9 @@ The config file is automatically created on first run and includes:
       "hostname": "prod.example.com",
       "user": "admin",
       "port": "22",
-      "tags": ["production", "web"]
+      "tags": ["production", "web"],
+      "identity_file": "~/.ssh/prod_key",
+      "proxy_jump": "bastion.example.com"
     },
     {
       "alias": "Dev Server",
@@ -147,6 +165,17 @@ The config file is automatically created on first run and includes:
   "theme": "purple"
 }
 ```
+
+### Authentication Types
+
+SSH Buddy supports multiple authentication methods:
+- **Password authentication** - Default SSH behavior
+- **Key-based authentication** - Specify an identity file path
+- **ProxyJump** - Connect through a bastion/jump host
+
+When adding or editing a host, you can specify:
+- **Identity File**: Path to your SSH private key (e.g., `~/.ssh/id_rsa`)
+- **Proxy Jump**: Bastion host to jump through (e.g., `bastion.example.com`)
 
 ## Tips
 

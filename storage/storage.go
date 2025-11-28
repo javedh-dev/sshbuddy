@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"sshbuddy/model"
+	"sshbuddy/sshconfig"
 )
 
 func GetDataPath() (string, error) {
@@ -34,18 +35,49 @@ func LoadConfig() (*model.Config, error) {
 		return nil, err
 	}
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return &model.Config{Hosts: []model.Host{}}, nil
-	}
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
 	var config model.Config
-	if err := json.Unmarshal(data, &config); err != nil {
-		return nil, err
+	
+	// Load manual hosts from config file
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		config = model.Config{Hosts: []model.Host{}}
+	} else {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal(data, &config); err != nil {
+			return nil, err
+		}
+	}
+	
+	// Mark manual hosts
+	for i := range config.Hosts {
+		if config.Hosts[i].Source == "" {
+			config.Hosts[i].Source = "manual"
+		}
+	}
+	
+	// Load hosts from SSH config
+	sshHosts, err := sshconfig.LoadHostsFromSSHConfig()
+	if err == nil {
+		// Mark SSH config hosts
+		for i := range sshHosts {
+			sshHosts[i].Source = "ssh-config"
+		}
+		
+		// Merge with manual hosts (manual hosts take precedence)
+		manualAliases := make(map[string]bool)
+		for _, host := range config.Hosts {
+			manualAliases[host.Alias] = true
+		}
+		
+		// Add SSH config hosts that don't conflict with manual hosts
+		for _, sshHost := range sshHosts {
+			if !manualAliases[sshHost.Alias] {
+				config.Hosts = append(config.Hosts, sshHost)
+			}
+		}
 	}
 
 	return &config, nil
@@ -57,7 +89,19 @@ func SaveConfig(config *model.Config) error {
 		return err
 	}
 
-	data, err := json.MarshalIndent(config, "", "  ")
+	// Only save manual hosts (not SSH config hosts)
+	manualConfig := &model.Config{
+		Theme: config.Theme,
+		Hosts: []model.Host{},
+	}
+	
+	for _, host := range config.Hosts {
+		if host.Source != "ssh-config" {
+			manualConfig.Hosts = append(manualConfig.Hosts, host)
+		}
+	}
+
+	data, err := json.MarshalIndent(manualConfig, "", "  ")
 	if err != nil {
 		return err
 	}
