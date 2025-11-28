@@ -3,12 +3,29 @@ package storage
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 
 	"sshbuddy/model"
 )
 
 func GetDataPath() (string, error) {
-	return "sshbuddy.json", nil
+	// Use XDG_CONFIG_HOME if set, otherwise default to ~/.config
+	configDir := os.Getenv("XDG_CONFIG_HOME")
+	if configDir == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		configDir = filepath.Join(homeDir, ".config")
+	}
+	
+	// Create sshbuddy config directory
+	sshbuddyDir := filepath.Join(configDir, "sshbuddy")
+	if err := os.MkdirAll(sshbuddyDir, 0755); err != nil {
+		return "", err
+	}
+	
+	return filepath.Join(sshbuddyDir, "config.json"), nil
 }
 
 func LoadConfig() (*model.Config, error) {
