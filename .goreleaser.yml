@@ -7,6 +7,7 @@ before:
 builds:
   - id: sshbuddy
     binary: sshbuddy
+    dir: .
     env:
       - CGO_ENABLED=0
     goos:
@@ -18,7 +19,7 @@ builds:
       - arm64
     ldflags:
       - -s -w -X main.version={{.Version}}
-    main: ./cmd/sshbuddy
+    main: ./cmd/sshbuddy/main.go
 
 archives:
   - id: sshbuddy
@@ -56,11 +57,11 @@ brews:
     ids:
       - sshbuddy
     repository:
-      owner: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
+      owner: javedh-dev
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Formula
-    homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/sshbuddy"
+    homepage: "https://github.com/javedh-dev/sshbuddy"
     description: "A beautiful TUI app to manage SSH connections"
     license: "MIT"
     commit_author:
