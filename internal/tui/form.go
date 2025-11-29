@@ -28,7 +28,6 @@ func NewFormModel() FormModel {
 
 	inputs[0] = textinput.New()
 	inputs[0].Placeholder = "Alias"
-	inputs[0].Focus()
 	inputs[0].CharLimit = 20
 	inputs[0].Width = 30
 
@@ -89,6 +88,8 @@ func NewFormModelWithHost(host models.Host) FormModel {
 }
 
 func (m FormModel) Init() tea.Cmd {
+	// Focus the first input when form is initialized
+	m.inputs[0].Focus()
 	return textinput.Blink
 }
 

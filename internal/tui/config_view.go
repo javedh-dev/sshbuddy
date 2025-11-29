@@ -296,11 +296,13 @@ func (m ConfigViewModel) Update(msg tea.Msg) (ConfigViewModel, tea.Cmd) {
 					m.termixFocus = 0
 					m.termixInputs[0].Focus()
 					m.saved = false
+					return m, nil
 				} else if m.sources[m.focusIndex].Name == "SSH Config" {
 					m.editingSSHConfig = true
 					m.sshConfigFocus = 0
 					m.sshConfigInputs[0].Focus()
 					m.saved = false
+					return m, nil
 				}
 			}
 		}
