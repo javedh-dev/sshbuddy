@@ -8,7 +8,7 @@
   },
   "termix": {
     "enabled": false,
-    "baseUrl": "https://your-termix-server.com/api",
+    "baseUrl": "https://your-termix-server.com",
     "jwt": "",
     "jwtExpiry": 0
   },

@@ -4,11 +4,11 @@
 ╚═╝└─┘┴ ┴  ╚═╝└─┘─┴┘─┴┘ ┴
 </pre>
 
----
+A modern terminal interface for managing SSH connections. SSHBuddy brings together hosts from multiple sources—your manual entries, SSH config, and Termix API—into one unified, keyboard-driven interface.
 
-A beautiful TUI app to manage SSH connections with live status indicators, multiple themes, and an intuitive 2-column interface.
+![SSH Buddy Screenshot](docs/screenshots/theme-purple.png)
 
-![SSH Buddy Screenshot](screenshots/purple.png)
+**Key Features**: Live ping status • Multiple data sources • Six color themes • Intuitive two-column layout • Keyboard-first navigation
 
 ## Installation
 
@@ -21,208 +21,164 @@ brew install sshbuddy
 
 ### From Source
 
+Requires Go 1.24 or later:
+
 ```bash
 git clone https://github.com/javedh-dev/sshbuddy.git
 cd sshbuddy
-go build .
-./sshbuddy
+go build -o sshbuddy ./cmd/sshbuddy
+sudo mv sshbuddy /usr/local/bin/
 ```
 
 ### Download Binary
 
-Download the latest release from the [releases page](https://github.com/javedh-dev/sshbuddy/releases).
+Pre-built binaries for Linux, macOS, and Windows are available on the [releases page](https://github.com/javedh-dev/sshbuddy/releases).
 
 ## Quick Start
 
-1. **Run the app:**
-   ```bash
-   sshbuddy
-   ```
+Launch SSHBuddy from your terminal:
 
-3. **Add a host:**
-   - Press `n`
-   - Fill in the details
-   - Press Enter to save
+```bash
+sshbuddy
+```
 
-4. **Connect:**
-   - Select a host with arrow keys
-   - Press Enter to connect
+**Add your first host**: Press `n`, fill in the connection details, and press Enter to save.
+
+**Connect**: Use arrow keys to select a host, then press Enter to establish the SSH connection.
+
+**Search**: Press `/` and start typing to filter hosts by name or hostname.
+
+For detailed instructions, see the [Getting Started Guide](docs/getting-started.md).
 
 ## Features
 
-- 🟢 **Live ping status indicators** - See which hosts are online at a glance
-- 🎨 **Multiple color themes** - 6 beautiful themes to choose from
-- 📋 **2-column layout** - View more hosts at once with row-wise display
-- 📝 **Duplicate hosts** - Quickly copy existing configurations
-- 🏷️ **Host tagging** - Organize hosts with custom tags
-- 🔧 **SSH config integration** - Automatically loads hosts from `~/.ssh/config`
-- 🔑 **Multiple auth methods** - Support for SSH keys, ProxyJump, and more
-- ✨ **Beautiful, modern UI** - Clean and intuitive interface
-- ⚡ **Fast and responsive** - Instant feedback and smooth navigation
-- 🔍 **Built-in search** - Filter hosts on the fly
-- 💾 **Automatic config persistence** - Saved in `~/.config/sshbuddy/config.json`
-- ⌨️ **Keyboard-driven** - Navigate without touching the mouse
+### Connection Management
+- **Multiple data sources**: Combine manual hosts, SSH config entries, and Termix API hosts in one interface
+- **Live status indicators**: Real-time ping status shows which hosts are reachable
+- **Smart organization**: Tag hosts and use visual icons to identify their source
+- **Quick duplication**: Copy existing hosts to speed up adding similar configurations
+
+### User Experience
+- **Keyboard-first design**: Every action is accessible via keyboard shortcuts
+- **Two-column layout**: See more hosts at once with an efficient grid display
+- **Instant search**: Filter hundreds of hosts in milliseconds
+- **Six color themes**: Choose a theme that matches your terminal aesthetic
+
+### SSH Features
+- **Full SSH config support**: Reads your existing `~/.ssh/config` automatically
+- **Advanced authentication**: SSH keys, ProxyJump, custom ports, and more
+- **Seamless execution**: Connects using your system's SSH client with all parameters
+
+### Integration
+- **Termix API support**: Fetch hosts from your Termix server with secure token-based auth
+- **Unified configuration**: Everything stored in one JSON file for easy backup and sync
+- **Cross-platform**: Works on Linux, macOS, and Windows
 
 ## Keyboard Shortcuts
 
-| Key | Action |
-|-----|--------|
-| `Enter` | Connect to selected host |
-| `n` | Add new host |
-| `e` | Edit selected host |
-| `c` | Duplicate/copy selected host |
-| `d` | Delete selected host |
-| `p` | Ping all hosts |
-| `t` | Switch theme |
-| `/` | Search/filter hosts |
-| `↑`/`↓` | Navigate up/down |
-| `←`/`→` | Navigate left/right (between columns) |
-| `q` | Quit |
-| `Esc` | Cancel (in forms/dialogs) |
-| `Ctrl+C` | Force quit |
+### Main Actions
+- `Enter` - Connect to selected host
+- `n` - Add new host
+- `e` - Edit host (manual hosts only)
+- `c` - Duplicate host
+- `d` - Delete host (manual hosts only)
+
+### Navigation
+- `↑`/`↓` or `k`/`j` - Move between rows
+- `←`/`→` or `h`/`l` - Move between columns
+- `/` - Search and filter hosts
+
+### Utilities
+- `p` - Ping all hosts to check status
+- `s` - Open settings menu
+- `q` - Quit application
+
+For a complete reference, see [Keyboard Shortcuts](docs/keyboard-shortcuts.md).
 
 ## Themes
 
-Press `t` to cycle through available themes. Your theme preference is automatically saved.
+SSHBuddy includes six professionally designed themes. Access them through the settings menu (press `s`, navigate to Theme, and press Space/Enter to cycle).
 
-### Purple Dream (Default)
-Soft purple tones for a calm, modern look.
+<table>
+<tr>
+<td width="50%">
 
-![Purple Theme](screenshots/purple.png)
+**Purple Dream** (Default)
+![Purple Theme](docs/screenshots/theme-purple.png)
 
-### Ocean Blue
-Cool blue tones inspired by the ocean.
+</td>
+<td width="50%">
 
-![Blue Theme](screenshots/blue.png)
+**Ocean Blue**
+![Blue Theme](docs/screenshots/theme-blue.png)
 
-### Matrix Green
-Classic terminal green for that retro hacker vibe.
+</td>
+</tr>
+<tr>
+<td width="50%">
 
-![Green Theme](screenshots/green.png)
+**Matrix Green**
+![Green Theme](docs/screenshots/theme-green.png)
 
-### Bubblegum Pink
-Vibrant pink for a fun, energetic interface.
+</td>
+<td width="50%">
 
-![Pink Theme](screenshots/pink.png)
+**Bubblegum Pink**
+![Pink Theme](docs/screenshots/theme-pink.png)
 
-### Sunset Amber
-Warm amber/orange tones like a beautiful sunset.
+</td>
+</tr>
+<tr>
+<td width="50%">
 
-![Amber Theme](screenshots/amber.png)
+**Sunset Amber**
+![Amber Theme](docs/screenshots/theme-amber.png)
 
-### Cyber Cyan
-Electric cyan for a futuristic cyberpunk aesthetic.
+</td>
+<td width="50%">
 
-![Cyan Theme](screenshots/cyan.png)
+**Cyber Cyan**
+![Cyan Theme](docs/screenshots/theme-cyan.png)
+
+</td>
+</tr>
+</table>
+
+Learn more about themes in the [Themes Guide](docs/themes.md).
 
 ## Configuration
 
-SSH Buddy stores its configuration in a single unified file:
-- **Linux/Unix**: `~/.config/sshbuddy/config.json`
-- **Respects XDG_CONFIG_HOME**: If set, uses `$XDG_CONFIG_HOME/sshbuddy/config.json`
+SSHBuddy stores everything in `~/.config/sshbuddy/config.json`. Press `s` to access settings where you can:
+- Toggle data sources (Manual, SSH Config, Termix)
+- Change themes
+- Configure Termix API
+- Set custom SSH config path
 
-The config file is automatically created on first run and includes:
-- Host configurations (alias, hostname, user, port, tags, identity file, proxy jump)
-- Theme preference
-- Source settings (enable/disable SSHBuddy, SSH Config, Termix)
-- Termix API configuration
-- SSH config path settings
-- All settings are validated on load
+### Data Sources
 
-### SSH Config Integration
+- **Manual Hosts (◆)** - Hosts you add through SSHBuddy
+- **SSH Config (■)** - Automatically imported from `~/.ssh/config`
+- **Termix API (▲)** - Fetched from your Termix server
 
-SSH Buddy automatically reads hosts from your `~/.ssh/config` file! Hosts from SSH config are:
-- Automatically loaded and displayed alongside manual hosts
-- Tagged with `ssh-config` for easy identification
-- **Read-only** - edit them in your SSH config file, not in SSH Buddy
-- Support advanced SSH features like:
-  - Identity files (SSH keys)
-  - ProxyJump (bastion hosts)
-  - Custom ports
-  - And more!
+See the [Configuration Guide](docs/configuration.md) and [Data Sources](docs/data-sources.md) for details.
 
-Manual hosts take precedence over SSH config hosts with the same alias.
+## Documentation
 
-### Termix API Integration
+- [Getting Started](docs/getting-started.md) - Installation and first steps
+- [Configuration](docs/configuration.md) - Detailed configuration options
+- [Data Sources](docs/data-sources.md) - Working with multiple host sources
+- [Keyboard Shortcuts](docs/keyboard-shortcuts.md) - Complete shortcut reference
+- [Themes](docs/themes.md) - Theme customization guide
+- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 
-SSH Buddy can fetch hosts from a Termix API endpoint! To enable:
+## Contributing
 
-1. Press `s` in the app to open settings
-2. Enable Termix and configure the base URL
-3. On first connection, you'll be prompted for credentials
-4. Your JWT token is cached securely (credentials are never stored)
+Contributions are welcome! Feel free to open issues for bugs or feature requests, or submit pull requests.
 
-**Authentication flow:**
-- When the JWT token expires, you'll be prompted to re-authenticate
-- Credentials are only requested when needed and never persisted
-- The JWT token and expiry are stored in the config for automatic re-use
+## License
 
-**API Requirements:**
-- Authentication endpoint: `POST /users/login` (returns JWT as cookie)
-- Hosts endpoint: `GET /ssh/db/host` (returns array of host objects)
-
-Termix hosts are automatically loaded on startup and marked with source `termix`. Manual and SSH config hosts take precedence over Termix hosts with the same alias.
-
-### Example Config
-
-```json
-{
-  "hosts": [
-    {
-      "alias": "Production Server",
-      "hostname": "prod.example.com",
-      "user": "admin",
-      "port": "22",
-      "tags": ["production", "web"],
-      "identity_file": "~/.ssh/prod_key",
-      "proxy_jump": "bastion.example.com"
-    },
-    {
-      "alias": "Dev Server",
-      "hostname": "192.168.1.100",
-      "user": "developer",
-      "port": "2222",
-      "tags": ["development"]
-    }
-  ],
-  "theme": "purple",
-  "sources": {
-    "sshbuddyEnabled": true,
-    "sshConfigEnabled": true,
-    "termixEnabled": false
-  },
-  "termix": {
-    "enabled": false,
-    "baseUrl": "https://your-termix-server.com/api",
-    "jwt": "",
-    "jwtExpiry": 0
-  },
-  "ssh": {
-    "enabled": true,
-    "configPath": ""
-  }
-}
-```
-
-### Authentication Types
-
-SSH Buddy supports multiple authentication methods:
-- **Password authentication** - Default SSH behavior
-- **Key-based authentication** - Specify an identity file path
-- **ProxyJump** - Connect through a bastion/jump host
-
-When adding or editing a host, you can specify:
-- **Identity File**: Path to your SSH private key (e.g., `~/.ssh/id_rsa`)
-- **Proxy Jump**: Bastion host to jump through (e.g., `bastion.example.com`)
-
-## Tips
-
-- **Quick duplicate**: Press `c` on any host to create a copy with " (copy)" appended to the alias
-- **Arrow navigation**: Use arrow keys to navigate the 2-column grid naturally (left/right for columns, up/down for rows)
-- **Search**: Press `/` and start typing to filter hosts by alias or hostname
-- **Ping status**: Green dot = online, Red dot = offline, Gray dot = unknown, Yellow dot = checking
-- **Tags**: Add comma-separated tags when creating/editing hosts for better organization
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-Enjoy managing your SSH connections! 🚀
+Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) and [Lipgloss](https://github.com/charmbracelet/lipgloss)
