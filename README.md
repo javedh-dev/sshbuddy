@@ -4,7 +4,7 @@
 ╚═╝└─┘┴ ┴  ╚═╝└─┘─┴┘─┴┘ ┴
 </pre>
 
-A modern terminal interface for managing SSH connections. SSHBuddy brings together hosts from multiple sources—your manual entries, SSH config, and Termix API—into one unified, keyboard-driven interface.
+A modern terminal interface for managing SSH connections. SSHBuddy brings together hosts from multiple sources—your manual entries, SSH config, and [Termix](https://github.com/Termix-SSH/Termix) API—into one unified, keyboard-driven interface.
 
 ![SSH Buddy Screenshot](docs/screenshots/theme-purple.png)
 
