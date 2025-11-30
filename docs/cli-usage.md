@@ -44,30 +44,33 @@ SSHBuddy supports autocomplete for bash, zsh, and fish shells. This enables tab 
 - Host aliases when using the connect command
 - Shell names when generating completion scripts
 
-### Automatic Installation (Recommended)
+### Installation
 
-The easiest way to install completion is to let SSHBuddy detect your shell and install it automatically:
+**Completions are automatically installed** when you install SSHBuddy via:
+- `brew install sshbuddy` (Homebrew)
+- `make install` (from source)
 
-```bash
-sshbuddy completion install
-```
-
-This will:
-- Detect your current shell (bash, zsh, or fish)
-- Add the completion script to the appropriate config file
-- Show you how to activate it
-
-After installation, either restart your terminal or source your shell config:
+After installation, restart your terminal or source your shell config:
 
 ```bash
 # Bash
 source ~/.bashrc
 
 # Zsh
-source ~/.zshrc
+exec zsh
 
 # Fish (automatic in new shells)
 ```
+
+### Manual Installation
+
+If you installed via binary download or need to reinstall completions:
+
+```bash
+sshbuddy completion install
+```
+
+This will detect your shell and add the completion script to the appropriate config file.
 
 ### Manual Installation
 

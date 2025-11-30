@@ -19,6 +19,8 @@ brew tap javedh-dev/tap
 brew install sshbuddy
 ```
 
+Shell completions are automatically installed.
+
 ### From Source
 
 Requires Go 1.24 or later:
@@ -26,8 +28,7 @@ Requires Go 1.24 or later:
 ```bash
 git clone https://github.com/javedh-dev/sshbuddy.git
 cd sshbuddy
-go build -o sshbuddy ./cmd/sshbuddy
-sudo mv sshbuddy /usr/local/bin/
+make install  # Installs to GOPATH/bin with completions
 ```
 
 ### Download Binary
@@ -66,16 +67,12 @@ sshbuddy ls  # Short form
 
 ### Shell Autocomplete
 
-Enable tab completion for commands and host aliases:
+Tab completion for commands and host aliases is automatically installed with `brew install` or `make install`.
+
+If you installed via binary download, enable completions manually:
 
 ```bash
-# Automatic installation (detects your shell)
-sshbuddy completion install
-
-# Or manually for specific shells
-source <(sshbuddy completion bash)  # Bash
-source <(sshbuddy completion zsh)   # Zsh
-sshbuddy completion fish | source   # Fish
+sshbuddy completion install  # Auto-detects your shell
 ```
 
 For detailed instructions, see the [Getting Started Guide](docs/getting-started.md) and [CLI Usage](docs/cli-usage.md).

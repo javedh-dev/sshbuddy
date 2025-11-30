@@ -13,6 +13,8 @@ brew tap javedh-dev/tap
 brew install sshbuddy
 ```
 
+Shell completions (bash, zsh, fish) are automatically installed with Homebrew.
+
 ### From Source
 
 If you have Go installed (version 1.24 or later):
@@ -20,8 +22,15 @@ If you have Go installed (version 1.24 or later):
 ```bash
 git clone https://github.com/javedh-dev/sshbuddy.git
 cd sshbuddy
+make install  # Builds and installs to GOPATH/bin with completions
+```
+
+Or build manually:
+
+```bash
 go build -o sshbuddy ./cmd/sshbuddy
 sudo mv sshbuddy /usr/local/bin/
+sshbuddy completion install  # Set up shell completions
 ```
 
 ### Download Binary
@@ -53,10 +62,11 @@ sshbuddy c <alias>  # Short form
 sshbuddy list
 sshbuddy ls  # Short form
 
-# Enable shell autocomplete (automatic)
+# Shell completions are automatically installed with brew or 'make install'
+# If needed, you can manually install or reinstall:
 sshbuddy completion install
 
-# Or manually for specific shells
+# Or load temporarily for specific shells
 source <(sshbuddy completion bash)  # For bash
 source <(sshbuddy completion zsh)   # For zsh
 sshbuddy completion fish | source   # For fish

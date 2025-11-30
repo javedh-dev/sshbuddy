@@ -47,6 +47,10 @@ install: build
 	@echo "Installing $(BINARY_NAME)..."
 	@go install $(CMD_DIR)
 	@echo "Installed to $(shell go env GOPATH)/bin/$(BINARY_NAME)"
+	@echo ""
+	@echo "Setting up shell completions..."
+	@$(shell go env GOPATH)/bin/$(BINARY_NAME) completion install || echo "Note: Run 'sshbuddy completion install' manually to enable shell completions"
+	@echo ""
 
 # Format code
 fmt:
