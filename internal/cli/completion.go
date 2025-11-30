@@ -9,11 +9,11 @@ import (
 func GenerateCompletion(shell string) {
 	switch shell {
 	case "bash":
-		fmt.Println(bashCompletion)
+		_, _ = os.Stdout.WriteString(bashCompletion)
 	case "zsh":
-		fmt.Println(zshCompletion)
+		_, _ = os.Stdout.WriteString(zshCompletion)
 	case "fish":
-		fmt.Println(fishCompletion)
+		_, _ = os.Stdout.WriteString(fishCompletion)
 	default:
 		fmt.Printf("Unsupported shell: %s\n", shell)
 		fmt.Println("Supported shells: bash, zsh, fish")
@@ -51,7 +51,7 @@ _sshbuddy_completion() {
             local alias=$(echo "$line" | sed 's/^  *//' | sed 's/  .*//')
             [ -n "$alias" ] && aliases+=("$alias")
         done < <($cmd list 2>/dev/null | tail -n +2)
-        COMPREPLY=( $(compgen -W "$(printf '%q\n' "${aliases[@]}")" -- ${cur}) )
+        COMPREPLY=( $(compgen -W "$(printf '%%q\n' "${aliases[@]}")" -- ${cur}) )
         return 0
     fi
 
