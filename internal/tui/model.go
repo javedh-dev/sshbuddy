@@ -205,6 +205,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			filterState := m.list.FilterState()
 			isSearching := filterState == list.Filtering
 			
+			// Handle Enter key in both search and normal mode
+			if msg.String() == "enter" {
+				// Connect to selected host
+				if selectedItem, ok := m.list.SelectedItem().(item); ok {
+					// Return a command that will execute SSH after quitting
+					return m, func() tea.Msg {
+						return ConnectMsg{Host: selectedItem.host}
+					}
+				}
+			}
+			
 			// Only process shortcuts when NOT in search mode
 			if !isSearching {
 				switch msg.String() {
@@ -230,14 +241,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					m.refreshList()
 					return m, StartPingAll(m.config.Hosts)
-				case "enter":
-					// Connect to selected host
-					if selectedItem, ok := m.list.SelectedItem().(item); ok {
-						// Return a command that will execute SSH after quitting
-						return m, func() tea.Msg {
-							return ConnectMsg{Host: selectedItem.host}
-						}
-					}
 				case "up", "k":
 					// Move up in 2-column layout (go back 2 items)
 					currentIdx := m.list.Index()

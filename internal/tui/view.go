@@ -319,12 +319,28 @@ func (m *Model) renderTwoColumnList() string {
 	}
 
 	// Render items row-wise: fill left column first, then right column for each row
+	// Only render rows that have at least one item
 	for row := 0; row < listHeight; row++ {
 		leftIdx := startIdx + (row * 2)      // 0, 2, 4, 6...
 		rightIdx := startIdx + (row * 2) + 1 // 1, 3, 5, 7...
 
+		// Stop if we've rendered all available items
+		if leftIdx >= len(items) {
+			break
+		}
+
 		leftColumn = append(leftColumn, renderItemAtIndex(leftIdx))
-		rightColumn = append(rightColumn, renderItemAtIndex(rightIdx))
+		
+		// Only add right column if there's an item for it
+		if rightIdx < len(items) {
+			rightColumn = append(rightColumn, renderItemAtIndex(rightIdx))
+		} else {
+			// Add empty space to maintain layout
+			rightColumn = append(rightColumn, lipgloss.NewStyle().
+				Width(columnWidth).
+				Height(itemHeight).
+				Render(""))
+		}
 	}
 
 	// Join columns side by side with gap
