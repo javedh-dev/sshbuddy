@@ -82,7 +82,8 @@ For detailed instructions, see the [Getting Started Guide](docs/getting-started.
 ### Connection Management
 - **Multiple data sources**: Combine manual hosts, SSH config entries, and Termix API hosts in one interface
 - **Live status indicators**: Real-time ping status shows which hosts are reachable
-- **Smart organization**: Tag hosts and use visual icons to identify their source
+- **Smart organization**: Tag hosts, mark favorites (❤), and use visual icons to identify their source
+- **Favorites support**: Mark frequently used hosts as favorites to keep them at the top of the list
 - **Quick duplication**: Copy existing hosts to speed up adding similar configurations
 
 ### User Experience
@@ -109,6 +110,7 @@ For detailed instructions, see the [Getting Started Guide](docs/getting-started.
 - `e` - Edit host (manual hosts only)
 - `c` - Duplicate host
 - `d` - Delete host (manual hosts only)
+- `f` - Toggle favorite (❤ icon beside source, sorted to top)
 
 ### Navigation
 - `↑`/`↓` or `k`/`j` - Move between rows

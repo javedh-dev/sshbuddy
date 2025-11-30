@@ -21,3 +21,6 @@ type FormSubmittedMsg struct {
 
 // TermixAuthSuccessMsg is sent when Termix authentication succeeds
 type TermixAuthSuccessMsg struct{}
+
+// ToggleFavoriteMsg is sent when a host's favorite status is toggled
+type ToggleFavoriteMsg struct{}

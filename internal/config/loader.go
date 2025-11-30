@@ -17,10 +17,19 @@ func LoadConfig() (*models.Config, error) {
 		return nil, err
 	}
 
-	// Mark manual hosts
+	// Initialize favorites map if nil
+	if config.Favorites == nil {
+		config.Favorites = make(map[string]bool)
+	}
+
+	// Mark manual hosts and apply favorites
 	for i := range config.Hosts {
 		if config.Hosts[i].Source == "" {
 			config.Hosts[i].Source = "manual"
+		}
+		// Apply favorite status from saved config
+		if config.Favorites[config.Hosts[i].Alias] {
+			config.Hosts[i].Favorite = true
 		}
 	}
 
@@ -41,9 +50,12 @@ func LoadConfig() (*models.Config, error) {
 	if config.Sources.SSHConfigEnabled && config.SSH.Enabled {
 		sshHosts, err := ssh.LoadHostsFromSSHConfig()
 		if err == nil {
-			// Mark SSH config hosts
+			// Mark SSH config hosts and apply favorites
 			for i := range sshHosts {
 				sshHosts[i].Source = "ssh-config"
+				if config.Favorites[sshHosts[i].Alias] {
+					sshHosts[i].Favorite = true
+				}
 			}
 
 			// Add SSH config hosts that don't conflict
@@ -84,9 +96,12 @@ func LoadConfig() (*models.Config, error) {
 
 		logError("Termix hosts fetched successfully", fmt.Errorf("count=%d", len(termixHosts)))
 
-		// Add Termix hosts that don't conflict
+		// Add Termix hosts that don't conflict and apply favorites
 		for _, termixHost := range termixHosts {
 			if !existingAliases[termixHost.Alias] {
+				if config.Favorites[termixHost.Alias] {
+					termixHost.Favorite = true
+				}
 				config.Hosts = append(config.Hosts, termixHost)
 				existingAliases[termixHost.Alias] = true
 			}
@@ -100,5 +115,22 @@ func LoadConfig() (*models.Config, error) {
 		}
 	}
 
+	// Sort hosts: favorites first, then by alias
+	sortHostsByFavorite(config.Hosts)
+
 	return config, nil
+}
+
+// sortHostsByFavorite sorts hosts with favorites at the top
+func sortHostsByFavorite(hosts []models.Host) {
+	// Simple bubble sort to move favorites to the top while maintaining relative order
+	n := len(hosts)
+	for i := 0; i < n-1; i++ {
+		for j := 0; j < n-i-1; j++ {
+			// If current is not favorite but next is, swap them
+			if !hosts[j].Favorite && hosts[j+1].Favorite {
+				hosts[j], hosts[j+1] = hosts[j+1], hosts[j]
+			}
+		}
+	}
 }

@@ -24,6 +24,7 @@ The host list uses a two-column layout. Up/down moves between rows, while left/r
 | `e` | Edit selected host (manual hosts only) |
 | `c` | Duplicate selected host |
 | `d` | Delete selected host (manual hosts only) |
+| `f` | Toggle favorite status (shows ❤ icon beside source) |
 
 ### Utility Functions
 
@@ -123,3 +124,5 @@ The host list uses a two-column layout. Up/down moves between rows, while left/r
 **Duplicate for Similar Hosts**: When adding multiple hosts with similar configurations, use `c` to duplicate an existing host and modify the copy. This saves time compared to filling out the form from scratch.
 
 **Read-Only Indicators**: Hosts from SSH config and Termix can't be edited or deleted through SSHBuddy. The `e` and `d` keys only work on manually added hosts.
+
+**Favorites**: Press `f` to mark a host as favorite. Favorited hosts are shown with a filled heart (❤) icon beside the source indicator and automatically sorted to the top of the list. This works for hosts from all sources (manual, SSH config, and Termix).

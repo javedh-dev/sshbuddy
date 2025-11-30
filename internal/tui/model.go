@@ -310,6 +310,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 					}
 					return m, nil
+				case "f":
+					// Toggle favorite status
+					if _, ok := m.list.SelectedItem().(item); ok {
+						return m, func() tea.Msg {
+							return ToggleFavoriteMsg{}
+						}
+					}
 				}
 			}
 		} else if m.state == stateForm {
@@ -450,6 +457,43 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.pinging[key] = true
 		}
 		return m, StartPingAll(m.config.Hosts)
+	
+	case ToggleFavoriteMsg:
+		// Toggle favorite status for selected host
+		currentIdx := m.list.Index()
+		if currentIdx >= 0 && currentIdx < len(m.config.Hosts) {
+			// Toggle favorite
+			m.config.Hosts[currentIdx].Favorite = !m.config.Hosts[currentIdx].Favorite
+			
+			// Update favorites map
+			if m.config.Favorites == nil {
+				m.config.Favorites = make(map[string]bool)
+			}
+			alias := m.config.Hosts[currentIdx].Alias
+			if m.config.Hosts[currentIdx].Favorite {
+				m.config.Favorites[alias] = true
+			} else {
+				delete(m.config.Favorites, alias)
+			}
+			
+			// Save config
+			config.SaveConfig(m.config)
+			
+			// Reload config to re-sort hosts
+			cfg, err := config.LoadConfig()
+			if err == nil {
+				m.config = cfg
+				// Find the host we just toggled and select it
+				for i, h := range m.config.Hosts {
+					if h.Alias == alias {
+						m.list.Select(i)
+						break
+					}
+				}
+			}
+			m.refreshList()
+		}
+		return m, nil
 	}
 
 	if m.state == stateList {

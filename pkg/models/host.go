@@ -15,14 +15,16 @@ type Host struct {
 	IdentityFile string   `json:"identity_file,omitempty"` // Path to SSH key
 	ProxyJump    string   `json:"proxy_jump,omitempty"`    // ProxyJump host
 	Source       string   `json:"source,omitempty"`        // "config" or "manual"
+	Favorite     bool     `json:"favorite,omitempty"`      // Mark as favorite
 }
 
 type Config struct {
-	Hosts   []Host        `json:"hosts"`
-	Theme   string        `json:"theme,omitempty"`
-	Sources SourcesConfig `json:"sources"`
-	Termix  TermixConfig  `json:"termix"`
-	SSH     SSHConfig     `json:"ssh"`
+	Hosts     []Host             `json:"hosts"`
+	Theme     string             `json:"theme,omitempty"`
+	Sources   SourcesConfig      `json:"sources"`
+	Termix    TermixConfig       `json:"termix"`
+	SSH       SSHConfig          `json:"ssh"`
+	Favorites map[string]bool    `json:"favorites,omitempty"` // Map of alias -> favorite status
 }
 
 type SourcesConfig struct {

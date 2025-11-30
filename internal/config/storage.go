@@ -39,17 +39,23 @@ func SaveConfig(config *models.Config) error {
 	}
 
 	// Only save manual hosts (not SSH config or termix hosts)
+	// But save favorites for all hosts
 	saveConfig := &models.Config{
-		Theme:   config.Theme,
-		Sources: config.Sources,
-		Termix:  config.Termix,
-		SSH:     config.SSH,
-		Hosts:   []models.Host{},
+		Theme:     config.Theme,
+		Sources:   config.Sources,
+		Termix:    config.Termix,
+		SSH:       config.SSH,
+		Hosts:     []models.Host{},
+		Favorites: make(map[string]bool),
 	}
 	
 	for _, host := range config.Hosts {
 		if host.Source != "ssh-config" && host.Source != "termix" {
 			saveConfig.Hosts = append(saveConfig.Hosts, host)
+		}
+		// Save favorite status for all hosts (including external sources)
+		if host.Favorite {
+			saveConfig.Favorites[host.Alias] = true
 		}
 	}
 

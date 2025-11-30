@@ -99,6 +99,7 @@ func (m Model) View() string {
 		keyStyle.Render("e") + descStyle.Render(":edit "),
 		keyStyle.Render("c") + descStyle.Render(":copy "),
 		keyStyle.Render("d") + descStyle.Render(":del "),
+		keyStyle.Render("f") + descStyle.Render(":fav "),
 		keyStyle.Render("p") + descStyle.Render(":ping "),
 		keyStyle.Render("s") + descStyle.Render(":settings "),
 		keyStyle.Render("/") + descStyle.Render(":search "),
@@ -256,8 +257,8 @@ func (m *Model) renderTwoColumnList() string {
 				hostInfo = hostInfo[:25] + "..."
 			}
 
-			// Source line - render with colors
-			sourceLine := renderSource(itm.host.Source, columnWidth-2, isSelected)
+			// Source line - render with colors and favorite indicator
+			sourceLine := renderSource(itm.host.Source, itm.host.Favorite, columnWidth-2, isSelected)
 
 			var titleLine, descLine string
 			if isSelected {
@@ -349,8 +350,8 @@ func (m *Model) renderTwoColumnList() string {
 	return listContent
 }
 
-// renderSource renders the source label with icons
-func renderSource(source string, maxWidth int, isSelected bool) string {
+// renderSource renders the source label with icons and favorite indicator
+func renderSource(source string, isFavorite bool, maxWidth int, isSelected bool) string {
 	if source == "" {
 		source = "sshbuddy"
 	}
@@ -376,8 +377,15 @@ func renderSource(source string, maxWidth int, isSelected bool) string {
 
 	// Use consistent dim color for all sources
 	sourceStyle := lipgloss.NewStyle().Foreground(dimColor)
+	sourceText := icon + " " + displayName
 
-	return sourceStyle.Render(icon + " " + displayName)
+	// Add filled heart icon for favorites beside source
+	if isFavorite {
+		favoriteIcon := lipgloss.NewStyle().Foreground(errorColor).Render(" ❤")
+		return sourceStyle.Render(sourceText) + favoriteIcon
+	}
+
+	return sourceStyle.Render(sourceText)
 }
 
 // renderDeleteConfirmation renders the delete confirmation dialog
