@@ -60,7 +60,6 @@ homebrew_casks:
       owner: javedh-dev
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    directory: Formula
     homepage: "https://github.com/javedh-dev/sshbuddy"
     description: "A modern terminal interface for managing SSH connections"
     license: "MIT"
