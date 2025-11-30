@@ -338,7 +338,3 @@ func (m FormModel) GetHost() models.Host {
 		Source:       "manual",
 	}
 }
-
-type FormSubmittedMsg struct {
-	Host models.Host
-}

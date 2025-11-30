@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sshbuddy/internal/cli"
+	"sshbuddy/internal/ssh"
 	"sshbuddy/internal/tui"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -30,7 +31,7 @@ func main() {
 		if m.GetSelectedHost() != nil {
 			host := m.GetSelectedHost()
 			fmt.Printf("Connecting to %s@%s...\n", host.User, host.Hostname)
-			if err := tui.ExecuteSSH(*host); err != nil {
+			if err := ssh.ExecuteSSH(*host); err != nil {
 				fmt.Printf("Error connecting to host: %v\n", err)
 				os.Exit(1)
 			}

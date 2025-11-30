@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sshbuddy/internal/config"
-	"sshbuddy/internal/tui"
+	"sshbuddy/internal/ssh"
 	"sshbuddy/pkg/models"
 	"strings"
 )
@@ -83,7 +83,7 @@ func ConnectByAlias(alias string) {
 	}
 
 	fmt.Printf("Connecting to %s (%s@%s)...\n", targetHost.Alias, targetHost.User, targetHost.Hostname)
-	if err := tui.ExecuteSSH(*targetHost); err != nil {
+	if err := ssh.ExecuteSSH(*targetHost); err != nil {
 		fmt.Printf("Error connecting to host: %v\n", err)
 		os.Exit(1)
 	}
