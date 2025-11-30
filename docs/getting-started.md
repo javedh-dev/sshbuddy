@@ -30,6 +30,8 @@ Download the latest release for your platform from the [releases page](https://g
 
 ## First Launch
 
+### Interactive Mode
+
 Simply run `sshbuddy` in your terminal:
 
 ```bash
@@ -37,6 +39,30 @@ sshbuddy
 ```
 
 On first launch, you'll see an empty host list. SSHBuddy automatically creates a configuration file at `~/.config/sshbuddy/config.json` where your settings and manually added hosts are stored.
+
+### Command-Line Mode
+
+SSHBuddy also works as a command-line tool for quick connections:
+
+```bash
+# Connect directly to a host by alias
+sshbuddy connect <alias>
+sshbuddy c <alias>  # Short form
+
+# List all configured hosts
+sshbuddy list
+sshbuddy ls  # Short form
+
+# Enable shell autocomplete (automatic)
+sshbuddy completion install
+
+# Or manually for specific shells
+source <(sshbuddy completion bash)  # For bash
+source <(sshbuddy completion zsh)   # For zsh
+sshbuddy completion fish | source   # For fish
+```
+
+See the [CLI Usage Guide](cli-usage.md) for more details on command-line features.
 
 ## Adding Your First Host
 
@@ -98,6 +124,7 @@ This helps you quickly identify which hosts you can edit (manual only) and where
 
 ## What's Next?
 
+- Learn about [CLI usage](cli-usage.md) for quick connections and autocomplete
 - Learn about [configuration options](configuration.md) to customize SSHBuddy
 - Explore [data sources](data-sources.md) to import hosts from SSH config or Termix
 - Discover [keyboard shortcuts](keyboard-shortcuts.md) for efficient navigation

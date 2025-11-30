@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sshbuddy/internal/cli"
 	"sshbuddy/internal/tui"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,11 +12,12 @@ import (
 var version = "dev"
 
 func main() {
-	// Handle version flag
-	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
-		fmt.Printf("sshbuddy version %s\n", version)
-		os.Exit(0)
+	// Handle CLI commands
+	if cli.HandleCLI(os.Args, version) {
+		return
 	}
+
+	// Launch TUI if no CLI command was handled
 	p := tea.NewProgram(tui.NewModel(), tea.WithAltScreen())
 	finalModel, err := p.Run()
 	if err != nil {

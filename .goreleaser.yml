@@ -49,14 +49,14 @@ changelog:
       - Merge pull request
       - Merge branch
 
-brews:
+homebrew:
   - repository:
       owner: javedh-dev
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Formula
     homepage: "https://github.com/javedh-dev/sshbuddy"
-    description: "A beautiful TUI app to manage SSH connections"
+    description: "A modern terminal interface for managing SSH connections"
     license: "MIT"
     commit_author:
       name: goreleaserbot

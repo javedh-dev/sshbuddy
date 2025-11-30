@@ -36,6 +36,8 @@ Pre-built binaries for Linux, macOS, and Windows are available on the [releases 
 
 ## Quick Start
 
+### Interactive TUI
+
 Launch SSHBuddy from your terminal:
 
 ```bash
@@ -48,7 +50,35 @@ sshbuddy
 
 **Search**: Press `/` and start typing to filter hosts by name or hostname.
 
-For detailed instructions, see the [Getting Started Guide](docs/getting-started.md).
+### Quick Connect (CLI)
+
+Connect directly to a host without the TUI:
+
+```bash
+# Connect by alias
+sshbuddy connect Atlas
+sshbuddy c Atlas  # Short form
+
+# List all hosts
+sshbuddy list
+sshbuddy ls  # Short form
+```
+
+### Shell Autocomplete
+
+Enable tab completion for commands and host aliases:
+
+```bash
+# Automatic installation (detects your shell)
+sshbuddy completion install
+
+# Or manually for specific shells
+source <(sshbuddy completion bash)  # Bash
+source <(sshbuddy completion zsh)   # Zsh
+sshbuddy completion fish | source   # Fish
+```
+
+For detailed instructions, see the [Getting Started Guide](docs/getting-started.md) and [CLI Usage](docs/cli-usage.md).
 
 ## Features
 
@@ -165,6 +195,7 @@ See the [Configuration Guide](docs/configuration.md) and [Data Sources](docs/dat
 ## Documentation
 
 - [Getting Started](docs/getting-started.md) - Installation and first steps
+- [CLI Usage](docs/cli-usage.md) - Command-line interface and autocomplete
 - [Configuration](docs/configuration.md) - Detailed configuration options
 - [Data Sources](docs/data-sources.md) - Working with multiple host sources
 - [Keyboard Shortcuts](docs/keyboard-shortcuts.md) - Complete shortcut reference
