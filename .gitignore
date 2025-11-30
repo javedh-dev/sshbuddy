@@ -18,6 +18,7 @@ go.work
 # Build artifacts
 dist/
 .go-dist/
+completions/
 
 # Config files (user-specific)
 sshbuddy.json
