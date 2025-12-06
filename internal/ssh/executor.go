@@ -29,8 +29,18 @@ func ExecuteSSH(host models.Host) error {
 		args = append(args, "-J", host.ProxyJump)
 	}
 
-	// Add host
-	args = append(args, fmt.Sprintf("%s@%s", host.User, host.Hostname))
+	// If a default path is specified, use -t to allocate a pseudo-terminal
+	// and execute a command to cd into the directory
+	if host.DefaultPath != "" {
+		args = append(args, "-t")
+		args = append(args, fmt.Sprintf("%s@%s", host.User, host.Hostname))
+		// Use exec to replace the shell with a new interactive shell after cd
+		// This ensures we get a proper interactive session in the target directory
+		args = append(args, fmt.Sprintf("cd '%s' && exec $SHELL -l", host.DefaultPath))
+	} else {
+		// Standard connection without default path
+		args = append(args, fmt.Sprintf("%s@%s", host.User, host.Hostname))
+	}
 
 	cmd := exec.Command("ssh", args...)
 

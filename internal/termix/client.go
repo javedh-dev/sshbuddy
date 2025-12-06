@@ -276,12 +276,13 @@ func (c *Client) FetchHosts(username, password string) ([]models.Host, error) {
 // convertTermixHost converts a Termix host to sshbuddy host format
 func convertTermixHost(th TermixHost) models.Host {
 	host := models.Host{
-		Alias:    th.Name,
-		Hostname: th.IP,
-		User:     th.Username,
-		Port:     strconv.Itoa(th.Port),
-		Tags:     th.Tags,
-		Source:   "termix",
+		Alias:       th.Name,
+		Hostname:    th.IP,
+		User:        th.Username,
+		Port:        strconv.Itoa(th.Port),
+		Tags:        th.Tags,
+		Source:      "termix",
+		DefaultPath: th.DefaultPath, // Use default path from Termix
 	}
 
 	// Handle SSH key if present

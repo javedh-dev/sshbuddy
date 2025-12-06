@@ -16,6 +16,7 @@ type Host struct {
 	ProxyJump    string   `json:"proxy_jump,omitempty"`    // ProxyJump host
 	Source       string   `json:"source,omitempty"`        // "config" or "manual"
 	Favorite     bool     `json:"favorite,omitempty"`      // Mark as favorite
+	DefaultPath  string   `json:"default_path,omitempty"`  // Default directory to cd into
 }
 
 type Config struct {

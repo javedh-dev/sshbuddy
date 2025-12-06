@@ -16,15 +16,15 @@ type FormModel struct {
 	inputs         []textinput.Model
 	focused        int
 	err            error
-	host           *models.Host              // If editing, this is the host being edited
+	host           *models.Host             // If editing, this is the host being edited
 	isEditing      bool                     // True if editing existing host
-	validationErrs []models.ValidationError  // Validation errors for current input
+	validationErrs []models.ValidationError // Validation errors for current input
 	width          int
 	height         int
 }
 
 func NewFormModel() FormModel {
-	var inputs []textinput.Model = make([]textinput.Model, 7)
+	var inputs []textinput.Model = make([]textinput.Model, 8)
 
 	inputs[0] = textinput.New()
 	inputs[0].Placeholder = "Alias"
@@ -61,6 +61,11 @@ func NewFormModel() FormModel {
 	inputs[6].CharLimit = 50
 	inputs[6].Width = 30
 
+	inputs[7] = textinput.New()
+	inputs[7].Placeholder = "Default Path (optional)"
+	inputs[7].CharLimit = 100
+	inputs[7].Width = 30
+
 	return FormModel{
 		inputs:  inputs,
 		focused: 0,
@@ -83,6 +88,7 @@ func NewFormModelWithHost(host models.Host) FormModel {
 	if len(host.Tags) > 0 {
 		fm.inputs[6].SetValue(strings.Join(host.Tags, ", "))
 	}
+	fm.inputs[7].SetValue(host.DefaultPath)
 
 	return fm
 }
@@ -155,7 +161,7 @@ func (m FormModel) Update(msg tea.Msg) (FormModel, tea.Cmd) {
 
 func (m FormModel) View() string {
 	const boxWidth = 80
-	
+
 	// ASCII art header (same as main screen)
 	asciiArt := lipgloss.NewStyle().
 		Foreground(primaryColor).
@@ -165,7 +171,7 @@ func (m FormModel) View() string {
 		Render(`╔═╗┌─┐┬ ┬  ╔╗ ┬ ┬┌┬┐┌┬┐┬ ┬
 ╚═╗└─┐├─┤  ╠╩╗│ │ ││ ││└┬┘
 ╚═╝└─┘┴ ┴  ╚═╝└─┘─┴┘─┴┘ ┴`)
-	
+
 	// Subheading - show different text for edit vs add
 	subheadingText := "Add New Host"
 	if m.isEditing {
@@ -176,15 +182,15 @@ func (m FormModel) View() string {
 		Width(boxWidth - 4).
 		Align(lipgloss.Center).
 		Render(subheadingText)
-	
+
 	separator := lipgloss.NewStyle().
 		Foreground(dimColor).
 		Width(boxWidth - 4).
 		Align(lipgloss.Center).
 		Render(strings.Repeat("─", boxWidth-4))
-	
+
 	header := lipgloss.JoinVertical(lipgloss.Left, asciiArt, subheading, separator)
-	
+
 	// Form fields - 2-column layout
 	fields := []struct {
 		label string
@@ -197,62 +203,63 @@ func (m FormModel) View() string {
 		{"Identity File", m.inputs[4]},
 		{"Proxy Jump", m.inputs[5]},
 		{"Tags", m.inputs[6]},
+		{"Default Path", m.inputs[7]},
 	}
-	
+
 	// Render each field
 	renderField := func(i int, field struct {
 		label string
 		input textinput.Model
 	}) string {
 		isFocused := i == m.focused
-		
+
 		// Label
 		labelStyle := lipgloss.NewStyle().Foreground(textColor).Bold(true)
 		if isFocused {
 			labelStyle = labelStyle.Foreground(primaryColor)
 		}
 		labelText := labelStyle.Render(field.label + ":")
-		
+
 		// Input
 		inputView := field.input.View()
-		
+
 		return lipgloss.JoinVertical(lipgloss.Left,
 			labelText,
 			inputView,
 		)
 	}
-	
+
 	// Split into two columns (first 4 fields in left, last 3 in right)
 	const columnWidth = 35
-	
+
 	var leftColumn []string
 	var rightColumn []string
-	
+
 	// Left column: Alias, Hostname, User, Port
 	for i := 0; i < 4 && i < len(fields); i++ {
 		fieldView := renderField(i, fields[i])
 		leftColumn = append(leftColumn, lipgloss.NewStyle().Width(columnWidth).Render(fieldView))
 		leftColumn = append(leftColumn, "") // spacing
 	}
-	
-	// Right column: Identity File, Proxy Jump, Tags
+
+	// Right column: Identity File, Proxy Jump, Tags, Default Path
 	for i := 4; i < len(fields); i++ {
 		fieldView := renderField(i, fields[i])
 		rightColumn = append(rightColumn, lipgloss.NewStyle().Width(columnWidth).Render(fieldView))
 		rightColumn = append(rightColumn, "") // spacing
 	}
-	
+
 	// Pad right column to match left column height
 	for len(rightColumn) < len(leftColumn) {
 		rightColumn = append(rightColumn, "")
 	}
-	
+
 	// Join columns side by side
 	leftContent := lipgloss.JoinVertical(lipgloss.Left, leftColumn...)
 	rightContent := lipgloss.JoinVertical(lipgloss.Left, rightColumn...)
-	
+
 	formContent := lipgloss.JoinHorizontal(lipgloss.Top, leftContent, rightContent)
-	
+
 	// Show validation errors if any
 	var errorMsg string
 	if len(m.validationErrs) > 0 {
@@ -264,7 +271,7 @@ func (m FormModel) View() string {
 			Foreground(errorColor).
 			Render("✗ " + strings.Join(errorLines, "\n  "))
 	}
-	
+
 	// Footer
 	keyBindings := []string{
 		keyStyle.Render("↑↓/tab") + descStyle.Render(":navigate "),
@@ -275,10 +282,10 @@ func (m FormModel) View() string {
 	footer := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder(), true, false, false, false).
 		BorderForeground(borderColor).
-		Width(boxWidth - 4).
+		Width(boxWidth-4).
 		Padding(0, 0).
 		Render(lipgloss.JoinHorizontal(lipgloss.Left, keyBindings...))
-	
+
 	// Combine all elements
 	var content string
 	if errorMsg != "" {
@@ -300,7 +307,7 @@ func (m FormModel) View() string {
 			footer,
 		)
 	}
-	
+
 	// Wrap in a fixed-width box - match main app styling
 	mainBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
@@ -308,7 +315,7 @@ func (m FormModel) View() string {
 		Width(boxWidth).
 		Padding(0, 2).
 		Render(content)
-	
+
 	// Center the box
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, mainBox)
 }
@@ -335,6 +342,7 @@ func (m FormModel) GetHost() models.Host {
 		IdentityFile: strings.TrimSpace(m.inputs[4].Value()),
 		ProxyJump:    strings.TrimSpace(m.inputs[5].Value()),
 		Tags:         tags,
+		DefaultPath:  strings.TrimSpace(m.inputs[7].Value()),
 		Source:       "manual",
 	}
 }
