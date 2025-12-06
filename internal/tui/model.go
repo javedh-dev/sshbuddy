@@ -283,10 +283,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					return m, nil
 				case "e":
-					// Edit selected host (only if from manual/sshbuddy source)
+					// Edit selected host (only if sshbuddy is one of the available sources)
 					if selectedItem, ok := m.list.SelectedItem().(item); ok {
-						if selectedItem.host.Source == "ssh-config" || selectedItem.host.Source == "termix" {
-							// Cannot edit SSH config or Termix hosts
+						// Check if manual/sshbuddy is in AvailableIn
+						hasManualSource := false
+						for _, src := range selectedItem.host.AvailableIn {
+							if src == "manual" || src == "sshbuddy" {
+								hasManualSource = true
+								break
+							}
+						}
+						if !hasManualSource {
+							// Cannot edit - no manual source available
 							return m, nil
 						}
 						m.state = stateForm
@@ -297,12 +305,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, m.form.Init()
 					}
 				case "c":
-					// Duplicate selected host
+					// Duplicate selected host (always allowed)
 					if selectedItem, ok := m.list.SelectedItem().(item); ok {
 						m.state = stateForm
 						duplicatedHost := selectedItem.host
 						// Append " (copy)" to the alias to avoid duplicates
 						duplicatedHost.Alias = duplicatedHost.Alias + " (copy)"
+						// Set source to manual and clear AvailableIn
+						duplicatedHost.Source = "manual"
+						duplicatedHost.AvailableIn = []string{"manual"}
 						m.form = NewFormModelWithHost(duplicatedHost)
 						m.form.width = m.width
 						m.form.height = m.height
@@ -310,10 +321,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, m.form.Init()
 					}
 				case "d", "delete":
-					// Show delete confirmation (only if from manual/sshbuddy source)
+					// Show delete confirmation (only if sshbuddy is one of the available sources)
 					if selectedItem, ok := m.list.SelectedItem().(item); ok {
-						if selectedItem.host.Source == "ssh-config" || selectedItem.host.Source == "termix" {
-							// Cannot delete SSH config or Termix hosts
+						// Check if manual/sshbuddy is in AvailableIn
+						hasManualSource := false
+						for _, src := range selectedItem.host.AvailableIn {
+							if src == "manual" || src == "sshbuddy" {
+								hasManualSource = true
+								break
+							}
+						}
+						if !hasManualSource {
+							// Cannot delete - no manual source available
 							return m, nil
 						}
 						currentIdx := m.list.Index()
@@ -358,14 +377,35 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else if m.state == stateConfirmDelete {
 			switch msg.String() {
 			case "y", "Y":
-				// Confirm deletion
-				if m.deleteConfirmIdx >= 0 && m.deleteConfirmIdx < len(m.config.Hosts) {
-					m.config.Hosts = append(m.config.Hosts[:m.deleteConfirmIdx], m.config.Hosts[m.deleteConfirmIdx+1:]...)
-					config.SaveConfig(m.config)
-					m.refreshList()
-					// Adjust selection if needed
-					if m.deleteConfirmIdx >= len(m.config.Hosts) && len(m.config.Hosts) > 0 {
-						m.list.Select(len(m.config.Hosts) - 1)
+				// Confirm deletion - only removes manual/sshbuddy version
+				if m.deleteConfirmHost != nil {
+					// Load raw config (manual hosts only)
+					rawConfig, err := config.LoadConfigRaw()
+					if err == nil {
+						// Remove the host with matching alias from manual hosts
+						alias := m.deleteConfirmHost.Alias
+						var updatedHosts []models.Host
+						for _, h := range rawConfig.Hosts {
+							if h.Alias != alias {
+								updatedHosts = append(updatedHosts, h)
+							}
+						}
+						rawConfig.Hosts = updatedHosts
+
+						// Save the updated manual hosts
+						config.SaveConfig(rawConfig)
+
+						// Reload full config to re-aggregate from all sources
+						newConfig, err := config.LoadConfig()
+						if err == nil {
+							m.config = newConfig
+						}
+						m.refreshList()
+
+						// Adjust selection if needed
+						if m.deleteConfirmIdx >= len(m.config.Hosts) && len(m.config.Hosts) > 0 {
+							m.list.Select(len(m.config.Hosts) - 1)
+						}
 					}
 				}
 				m.deleteConfirmHost = nil
@@ -408,14 +448,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter":
 				// Connect with selected source
 				if m.pendingConnectHost != nil {
-					// Create a copy of the host with the selected source as primary
 					selectedSource := m.pendingConnectHost.AvailableIn[m.selectedSourceIdx]
-					hostCopy := *m.pendingConnectHost
-					hostCopy.Source = selectedSource
+
+					// Prefer using the stored variant for the selected source if available
+					var hostToConnect models.Host
+					if variant, ok := m.pendingConnectHost.Variants[selectedSource]; ok && variant != nil {
+						hostToConnect = *variant
+						// Ensure source field is correct (variants store original source)
+						hostToConnect.Source = selectedSource
+					} else {
+						// Fallback: Create a copy of the host with the selected source label
+						hostCopy := *m.pendingConnectHost
+						hostCopy.Source = selectedSource
+						hostToConnect = hostCopy
+					}
+
 					m.pendingConnectHost = nil
 					m.state = stateList
 					return m, func() tea.Msg {
-						return ConnectMsg{Host: hostCopy}
+						return ConnectMsg{Host: hostToConnect}
 					}
 				}
 				m.state = stateList
@@ -459,14 +510,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case FormSubmittedMsg:
-		if m.editingIndex >= 0 && m.editingIndex < len(m.config.Hosts) {
-			// Editing existing host
-			m.config.Hosts[m.editingIndex] = msg.Host
-		} else {
-			// Adding new host
-			m.config.Hosts = append(m.config.Hosts, msg.Host)
+		// Load raw config to update manual hosts
+		rawConfig, err := config.LoadConfigRaw()
+		if err == nil {
+			if m.editingIndex >= 0 {
+				// Editing existing host - find and update by alias
+				alias := m.config.Hosts[m.editingIndex].Alias
+				for i, h := range rawConfig.Hosts {
+					if h.Alias == alias {
+						rawConfig.Hosts[i] = msg.Host
+						break
+					}
+				}
+			} else {
+				// Adding new host
+				rawConfig.Hosts = append(rawConfig.Hosts, msg.Host)
+			}
+
+			// Save the updated manual hosts
+			config.SaveConfig(rawConfig)
+
+			// Reload full config to re-aggregate from all sources
+			newConfig, err := config.LoadConfig()
+			if err == nil {
+				m.config = newConfig
+			}
 		}
-		config.SaveConfig(m.config)
 		m.state = stateList
 		m.editingIndex = -1
 		m.refreshList()

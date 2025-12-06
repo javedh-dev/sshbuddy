@@ -20,13 +20,13 @@ func GetDataPath() (string, error) {
 		}
 		configDir = filepath.Join(homeDir, ".config")
 	}
-	
+
 	// Create sshbuddy config directory
 	sshbuddyDir := filepath.Join(configDir, "sshbuddy")
 	if err := os.MkdirAll(sshbuddyDir, 0755); err != nil {
 		return "", err
 	}
-	
+
 	return filepath.Join(sshbuddyDir, "config.json"), nil
 }
 
@@ -48,11 +48,35 @@ func SaveConfig(config *models.Config) error {
 		Hosts:     []models.Host{},
 		Favorites: make(map[string]bool),
 	}
-	
+
 	for _, host := range config.Hosts {
+		shouldSave := false
+
+		// Check if primary source is manual
 		if host.Source != "ssh-config" && host.Source != "termix" {
-			saveConfig.Hosts = append(saveConfig.Hosts, host)
+			shouldSave = true
 		}
+
+		// Check if it's available in manual source (even if shadowed/merged)
+		if !shouldSave {
+			for _, src := range host.AvailableIn {
+				if src == "manual" || src == "sshbuddy" {
+					shouldSave = true
+					break
+				}
+			}
+		}
+
+		if shouldSave {
+			// Create a copy to save as manual host
+			hostToSave := host
+			hostToSave.Source = "manual"
+			// Don't save runtime fields
+			hostToSave.AvailableIn = nil
+
+			saveConfig.Hosts = append(saveConfig.Hosts, hostToSave)
+		}
+
 		// Save favorite status for all hosts (including external sources)
 		if host.Favorite {
 			saveConfig.Favorites[host.Alias] = true
@@ -67,24 +91,20 @@ func SaveConfig(config *models.Config) error {
 	return os.WriteFile(path, data, 0644)
 }
 
-
-
 // logError logs errors to a debug file for troubleshooting
 func logError(context string, err error) {
 	logPath := "/tmp/sshbuddy-debug.log"
-	
+
 	logFile, fileErr := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if fileErr != nil {
 		return // Silently fail if we can't log
 	}
 	defer logFile.Close()
-	
+
 	timestamp := fmt.Sprintf("[%s]", os.Getenv("USER"))
 	logLine := fmt.Sprintf("%s %s: %v\n", timestamp, context, err)
 	logFile.WriteString(logLine)
 }
-
-
 
 // LoadConfigRaw loads the config file without fetching external sources (SSH config, Termix)
 func LoadConfigRaw() (*models.Config, error) {
@@ -94,7 +114,7 @@ func LoadConfigRaw() (*models.Config, error) {
 	}
 
 	var config models.Config
-	
+
 	// Load config from file
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		// Initialize with defaults
@@ -122,7 +142,7 @@ func LoadConfigRaw() (*models.Config, error) {
 			return nil, err
 		}
 	}
-	
+
 	return &config, nil
 }
 
@@ -133,20 +153,20 @@ func AuthenticateTermix(username, password string) error {
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-	
+
 	if !config.Termix.Enabled || config.Termix.BaseURL == "" {
 		return fmt.Errorf("termix is not enabled or baseUrl is not configured")
 	}
-	
+
 	client := termix.NewClient(config.Termix.BaseURL, "", 0)
 	jwt, expiry, err := client.Authenticate(username, password)
 	if err != nil {
 		return err
 	}
-	
+
 	// Update config with new token and expiry
 	config.Termix.JWT = jwt
 	config.Termix.JWTExpiry = expiry
-	
+
 	return SaveConfig(config)
 }

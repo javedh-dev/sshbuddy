@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"sshbuddy/pkg/models"
+	"strings"
 )
 
 // ExecuteSSH executes SSH connection in the foreground
@@ -34,9 +35,14 @@ func ExecuteSSH(host models.Host) error {
 	if host.DefaultPath != "" {
 		args = append(args, "-t")
 		args = append(args, fmt.Sprintf("%s@%s", host.User, host.Hostname))
-		// Use exec to replace the shell with a new interactive shell after cd
-		// This ensures we get a proper interactive session in the target directory
-		args = append(args, fmt.Sprintf("cd '%s' && exec $SHELL -l", host.DefaultPath))
+
+		// Escape the path for use in double quotes to prevent command injection
+		// but allow tilde and variable expansion
+		escapedPath := escapeForDoubleQuotes(host.DefaultPath)
+
+		// Use double quotes to allow tilde (~) expansion and variable substitution
+		// while still protecting against spaces and most special characters
+		args = append(args, fmt.Sprintf("cd \"%s\" && exec $SHELL -l", escapedPath))
 	} else {
 		// Standard connection without default path
 		args = append(args, fmt.Sprintf("%s@%s", host.User, host.Hostname))
@@ -51,4 +57,24 @@ func ExecuteSSH(host models.Host) error {
 
 	// Run SSH in foreground and wait for it to complete
 	return cmd.Run()
+}
+
+// escapeForDoubleQuotes escapes characters that need escaping within double quotes
+// and converts ~ to $HOME for proper expansion (since ~ doesn't expand in double quotes)
+func escapeForDoubleQuotes(path string) string {
+	// Convert tilde to $HOME for expansion (~ doesn't expand inside double quotes)
+	if strings.HasPrefix(path, "~/") {
+		path = "$HOME/" + path[2:]
+	} else if path == "~" {
+		path = "$HOME"
+	}
+
+	// Replace backslash with escaped backslash
+	path = strings.ReplaceAll(path, "\\", "\\\\")
+	// Replace double quote with escaped double quote
+	path = strings.ReplaceAll(path, "\"", "\\\"")
+	// Replace backtick with escaped backtick (prevents command substitution)
+	path = strings.ReplaceAll(path, "`", "\\`")
+	// Don't escape $ as we want variable expansion (including $HOME)
+	return path
 }

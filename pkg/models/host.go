@@ -7,17 +7,18 @@ import (
 )
 
 type Host struct {
-	Alias        string   `json:"alias"`
-	Hostname     string   `json:"hostname"`
-	User         string   `json:"user"`
-	Port         string   `json:"port"`
-	Tags         []string `json:"tags"`
-	IdentityFile string   `json:"identity_file,omitempty"` // Path to SSH key
-	ProxyJump    string   `json:"proxy_jump,omitempty"`    // ProxyJump host
-	Source       string   `json:"source,omitempty"`        // Primary source: "termix", "ssh-config", or "manual"
-	AvailableIn  []string `json:"available_in,omitempty"`  // All sources this host is available in
-	Favorite     bool     `json:"favorite,omitempty"`      // Mark as favorite
-	DefaultPath  string   `json:"default_path,omitempty"`  // Default directory to cd into
+	Alias        string           `json:"alias"`
+	Hostname     string           `json:"hostname"`
+	User         string           `json:"user"`
+	Port         string           `json:"port"`
+	Tags         []string         `json:"tags"`
+	IdentityFile string           `json:"identity_file,omitempty"` // Path to SSH key
+	ProxyJump    string           `json:"proxy_jump,omitempty"`    // ProxyJump host
+	Source       string           `json:"source,omitempty"`        // Primary source: "termix", "ssh-config", or "manual"
+	AvailableIn  []string         `json:"available_in,omitempty"`  // All sources this host is available in
+	Favorite     bool             `json:"favorite,omitempty"`      // Mark as favorite
+	DefaultPath  string           `json:"default_path,omitempty"`  // Default directory to cd into
+	Variants     map[string]*Host `json:"-"`                       // Configuration variants by source (not saved to JSON)
 }
 
 type Config struct {
