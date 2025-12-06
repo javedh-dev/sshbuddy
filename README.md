@@ -95,10 +95,12 @@ For detailed instructions, see the [Getting Started Guide](docs/getting-started.
 ### SSH Features
 - **Full SSH config support**: Reads your existing `~/.ssh/config` automatically
 - **Advanced authentication**: SSH keys, ProxyJump, custom ports, and more
+- **Default directory**: Automatically navigate to a specific directory on connection
 - **Seamless execution**: Connects using your system's SSH client with all parameters
 
 ### Integration
 - **Termix API support**: Fetch hosts from your Termix server with secure token-based auth
+- **Import from Termix**: Convert Termix hosts to local configuration for offline access
 - **Unified configuration**: Everything stored in one JSON file for easy backup and sync
 - **Cross-platform**: Works on Linux, macOS, and Windows
 

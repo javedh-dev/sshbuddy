@@ -2,9 +2,9 @@ package tui
 
 import (
 	"fmt"
-	"strings"
 	"sshbuddy/internal/config"
 	"sshbuddy/pkg/models"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -20,6 +20,7 @@ const (
 	stateConfigError
 	stateConfig
 	stateTermixAuth
+	stateSourceSelect
 )
 
 type item struct {
@@ -29,7 +30,7 @@ type item struct {
 	pingTime string // Ping time in ms
 }
 
-func (i item) Title() string { 
+func (i item) Title() string {
 	// Colored dot based on ping status
 	var statusText string
 	if i.pinging {
@@ -45,10 +46,10 @@ func (i item) Title() string {
 			statusText = statusUnknownStyle.Render("○")
 		}
 	}
-	
+
 	// Add ping time if available
 	if i.pingTime != "" {
-		return fmt.Sprintf("%s %s %s", statusText, i.host.Alias, 
+		return fmt.Sprintf("%s %s %s", statusText, i.host.Alias,
 			lipgloss.NewStyle().Foreground(dimColor).Render(fmt.Sprintf("(%s)", i.pingTime)))
 	}
 	return fmt.Sprintf("%s %s", statusText, i.host.Alias)
@@ -65,29 +66,31 @@ func (i item) Description() string {
 func (i item) FilterValue() string { return i.host.Alias + i.host.Hostname }
 
 type Model struct {
-	list              list.Model
-	form              FormModel
-	configView        ConfigViewModel
-	termixAuth        TermixAuthModel
-	state             sessionState
-	config            *models.Config
-	pingStatus        map[string]bool          // track ping status for each host
-	pinging           map[string]bool          // track which hosts are currently being pinged
-	pingTimes         map[string]string        // track ping times for each host
-	width             int
-	height            int
-	selectedHost      *models.Host              // Host to connect to after quitting
-	editingIndex      int                      // Index of host being edited (-1 if adding new)
-	deleteConfirmHost *models.Host              // Host pending deletion confirmation
-	deleteConfirmIdx  int                      // Index of host pending deletion
-	configErrors      []models.ValidationError  // Config validation errors
+	list               list.Model
+	form               FormModel
+	configView         ConfigViewModel
+	termixAuth         TermixAuthModel
+	state              sessionState
+	config             *models.Config
+	pingStatus         map[string]bool   // track ping status for each host
+	pinging            map[string]bool   // track which hosts are currently being pinged
+	pingTimes          map[string]string // track ping times for each host
+	width              int
+	height             int
+	selectedHost       *models.Host             // Host to connect to after quitting
+	editingIndex       int                      // Index of host being edited (-1 if adding new)
+	deleteConfirmHost  *models.Host             // Host pending deletion confirmation
+	deleteConfirmIdx   int                      // Index of host pending deletion
+	configErrors       []models.ValidationError // Config validation errors
+	pendingConnectHost *models.Host             // Host pending source selection
+	selectedSourceIdx  int                      // Selected source index in source selection dialog
 }
 
 func NewModel() Model {
 	cfg, err := config.LoadConfig()
 	var validationErrors []models.ValidationError
 	var needsTermixAuth bool
-	
+
 	if err != nil {
 		// Check if this is a Termix auth error
 		if strings.Contains(err.Error(), "authentication required") {
@@ -108,14 +111,14 @@ func NewModel() Model {
 		// Validate config
 		validationErrors = cfg.Validate()
 	}
-	
+
 	// Apply saved theme or default to purple
 	themeName := cfg.Theme
 	if themeName == "" {
 		themeName = "purple"
 	}
 	ApplyTheme(themeName)
-	
+
 	items := []list.Item{}
 	for _, h := range cfg.Hosts {
 		items = append(items, item{host: h, status: "⚪"})
@@ -125,7 +128,7 @@ func NewModel() Model {
 	delegate := list.NewDefaultDelegate()
 	delegate.SetHeight(3) // Three lines per item (title + description + tags)
 	delegate.SetSpacing(0)
-	
+
 	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
 		Foreground(primaryColor).
 		Bold(true).
@@ -133,18 +136,18 @@ func NewModel() Model {
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(primaryColor).
 		Padding(0, 0, 0, 1)
-	
+
 	delegate.Styles.SelectedDesc = delegate.Styles.SelectedDesc.
 		Foreground(mutedColor).
 		BorderLeft(true).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(primaryColor).
 		Padding(0, 0, 0, 1)
-	
+
 	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
 		Foreground(primaryColor).
 		Padding(0, 0, 0, 2)
-	
+
 	delegate.Styles.NormalDesc = delegate.Styles.NormalDesc.
 		Foreground(dimColor).
 		Padding(0, 0, 0, 2)
@@ -169,7 +172,7 @@ func NewModel() Model {
 		editingIndex: -1,
 		configErrors: validationErrors,
 	}
-	
+
 	// If Termix auth is needed, show auth form
 	if needsTermixAuth {
 		m.state = stateTermixAuth
@@ -177,7 +180,7 @@ func NewModel() Model {
 		// If there are validation errors, show error state
 		m.state = stateConfigError
 	}
-	
+
 	return m
 }
 
@@ -199,23 +202,31 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
 		}
-		
+
 		if m.state == stateList {
 			// Check if we're in search/filter mode - if so, only allow escape and let list handle other keys
 			filterState := m.list.FilterState()
 			isSearching := filterState == list.Filtering
-			
+
 			// Handle Enter key in both search and normal mode
 			if msg.String() == "enter" {
 				// Connect to selected host
 				if selectedItem, ok := m.list.SelectedItem().(item); ok {
-					// Return a command that will execute SSH after quitting
+					// Check if host is available in multiple sources
+					if len(selectedItem.host.AvailableIn) > 1 {
+						// Show source selection dialog
+						m.pendingConnectHost = &selectedItem.host
+						m.selectedSourceIdx = 0
+						m.state = stateSourceSelect
+						return m, nil
+					}
+					// Single source - connect directly
 					return m, func() tea.Msg {
 						return ConnectMsg{Host: selectedItem.host}
 					}
 				}
 			}
-			
+
 			// Only process shortcuts when NOT in search mode
 			if !isSearching {
 				switch msg.String() {
@@ -231,7 +242,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.form = NewFormModel() // Reset form
 					m.form.width = m.width
 					m.form.height = m.height
-					m.editingIndex = -1     // -1 means adding new
+					m.editingIndex = -1 // -1 means adding new
 					return m, m.form.Init()
 				case "p":
 					// Ping all servers - mark all as pinging
@@ -380,6 +391,41 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "q", "Q":
 				return m, tea.Quit
 			}
+		} else if m.state == stateSourceSelect {
+			switch msg.String() {
+			case "up", "k":
+				// Move up in source list
+				if m.selectedSourceIdx > 0 {
+					m.selectedSourceIdx--
+				}
+				return m, nil
+			case "down", "j":
+				// Move down in source list
+				if m.pendingConnectHost != nil && m.selectedSourceIdx < len(m.pendingConnectHost.AvailableIn)-1 {
+					m.selectedSourceIdx++
+				}
+				return m, nil
+			case "enter":
+				// Connect with selected source
+				if m.pendingConnectHost != nil {
+					// Create a copy of the host with the selected source as primary
+					selectedSource := m.pendingConnectHost.AvailableIn[m.selectedSourceIdx]
+					hostCopy := *m.pendingConnectHost
+					hostCopy.Source = selectedSource
+					m.pendingConnectHost = nil
+					m.state = stateList
+					return m, func() tea.Msg {
+						return ConnectMsg{Host: hostCopy}
+					}
+				}
+				m.state = stateList
+				return m, nil
+			case "esc":
+				// Cancel source selection
+				m.pendingConnectHost = nil
+				m.state = stateList
+				return m, nil
+			}
 		}
 
 	case tea.WindowSizeMsg:
@@ -388,17 +434,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Fixed width box for 2-column layout
 		const boxWidth = 80
 		listWidth := boxWidth - 8 // Account for padding and borders
-		listHeight := 20 // Height for scrollable list
+		listHeight := 20          // Height for scrollable list
 		m.list.SetSize(listWidth, listHeight)
-		
+
 		// Update config view size
 		m.configView.width = msg.Width
 		m.configView.height = msg.Height
-		
+
 		// Update form size
 		m.form.width = msg.Width
 		m.form.height = msg.Height
-		
+
 		// Update termix auth size
 		m.termixAuth.width = msg.Width
 		m.termixAuth.height = msg.Height
@@ -431,7 +477,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Store the host and quit the TUI
 		m.selectedHost = &msg.Host
 		return m, tea.Quit
-	
+
 	case TermixAuthSuccessMsg:
 		// Reload config after successful auth
 		cfg, err := config.LoadConfig()
@@ -460,14 +506,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.pinging[key] = true
 		}
 		return m, StartPingAll(m.config.Hosts)
-	
+
 	case ToggleFavoriteMsg:
 		// Toggle favorite status for selected host
 		currentIdx := m.list.Index()
 		if currentIdx >= 0 && currentIdx < len(m.config.Hosts) {
 			// Toggle favorite
 			m.config.Hosts[currentIdx].Favorite = !m.config.Hosts[currentIdx].Favorite
-			
+
 			// Update favorites map
 			if m.config.Favorites == nil {
 				m.config.Favorites = make(map[string]bool)
@@ -478,10 +524,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				delete(m.config.Favorites, alias)
 			}
-			
+
 			// Save config
 			config.SaveConfig(m.config)
-			
+
 			// Reload config to re-sort hosts
 			cfg, err := config.LoadConfig()
 			if err == nil {
@@ -538,4 +584,3 @@ func (m *Model) refreshList() {
 func (m Model) GetSelectedHost() *models.Host {
 	return m.selectedHost
 }
-

@@ -14,18 +14,19 @@ type Host struct {
 	Tags         []string `json:"tags"`
 	IdentityFile string   `json:"identity_file,omitempty"` // Path to SSH key
 	ProxyJump    string   `json:"proxy_jump,omitempty"`    // ProxyJump host
-	Source       string   `json:"source,omitempty"`        // "config" or "manual"
+	Source       string   `json:"source,omitempty"`        // Primary source: "termix", "ssh-config", or "manual"
+	AvailableIn  []string `json:"available_in,omitempty"`  // All sources this host is available in
 	Favorite     bool     `json:"favorite,omitempty"`      // Mark as favorite
 	DefaultPath  string   `json:"default_path,omitempty"`  // Default directory to cd into
 }
 
 type Config struct {
-	Hosts     []Host             `json:"hosts"`
-	Theme     string             `json:"theme,omitempty"`
-	Sources   SourcesConfig      `json:"sources"`
-	Termix    TermixConfig       `json:"termix"`
-	SSH       SSHConfig          `json:"ssh"`
-	Favorites map[string]bool    `json:"favorites,omitempty"` // Map of alias -> favorite status
+	Hosts     []Host          `json:"hosts"`
+	Theme     string          `json:"theme,omitempty"`
+	Sources   SourcesConfig   `json:"sources"`
+	Termix    TermixConfig    `json:"termix"`
+	SSH       SSHConfig       `json:"ssh"`
+	Favorites map[string]bool `json:"favorites,omitempty"` // Map of alias -> favorite status
 }
 
 type SourcesConfig struct {

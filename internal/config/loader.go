@@ -9,6 +9,8 @@ import (
 )
 
 // LoadConfig loads configuration and aggregates hosts from all enabled sources
+// Priority order: Termix (highest) → SSH Config → Manual (lowest)
+// For duplicate aliases, the highest priority source wins, but all sources are tracked in AvailableIn
 func LoadConfig() (*models.Config, error) {
 	// Load base config from file
 	config, err := LoadConfigRaw()
@@ -22,53 +24,13 @@ func LoadConfig() (*models.Config, error) {
 		config.Favorites = make(map[string]bool)
 	}
 
-	// Mark manual hosts and apply favorites
-	for i := range config.Hosts {
-		if config.Hosts[i].Source == "" {
-			config.Hosts[i].Source = "manual"
-		}
-		// Apply favorite status from saved config
-		if config.Favorites[config.Hosts[i].Alias] {
-			config.Hosts[i].Favorite = true
-		}
-	}
+	// Map to track hosts by alias: alias -> host
+	hostMap := make(map[string]*models.Host)
 
-	// Track all aliases to avoid duplicates
-	existingAliases := make(map[string]bool)
+	// Track all hosts we'll process, in priority order
+	var allHosts []models.Host
 
-	// Only add manual hosts if SSHBuddy source is enabled
-	if config.Sources.SSHBuddyEnabled {
-		for _, host := range config.Hosts {
-			existingAliases[host.Alias] = true
-		}
-	} else {
-		// Clear manual hosts if disabled
-		config.Hosts = []models.Host{}
-	}
-
-	// Load hosts from SSH config if enabled
-	if config.Sources.SSHConfigEnabled && config.SSH.Enabled {
-		sshHosts, err := ssh.LoadHostsFromSSHConfig()
-		if err == nil {
-			// Mark SSH config hosts and apply favorites
-			for i := range sshHosts {
-				sshHosts[i].Source = "ssh-config"
-				if config.Favorites[sshHosts[i].Alias] {
-					sshHosts[i].Favorite = true
-				}
-			}
-
-			// Add SSH config hosts that don't conflict
-			for _, sshHost := range sshHosts {
-				if !existingAliases[sshHost.Alias] {
-					config.Hosts = append(config.Hosts, sshHost)
-					existingAliases[sshHost.Alias] = true
-				}
-			}
-		}
-	}
-
-	// Load hosts from Termix API if enabled
+	// PRIORITY 1: Load hosts from Termix API if enabled (HIGHEST PRIORITY)
 	if config.Sources.TermixEnabled && config.Termix.Enabled && config.Termix.BaseURL != "" {
 		logError("Termix config loaded", fmt.Errorf("baseUrl=%s", config.Termix.BaseURL))
 
@@ -95,17 +57,7 @@ func LoadConfig() (*models.Config, error) {
 		}
 
 		logError("Termix hosts fetched successfully", fmt.Errorf("count=%d", len(termixHosts)))
-
-		// Add Termix hosts that don't conflict and apply favorites
-		for _, termixHost := range termixHosts {
-			if !existingAliases[termixHost.Alias] {
-				if config.Favorites[termixHost.Alias] {
-					termixHost.Favorite = true
-				}
-				config.Hosts = append(config.Hosts, termixHost)
-				existingAliases[termixHost.Alias] = true
-			}
-		}
+		allHosts = append(allHosts, termixHosts...)
 
 		// Save the JWT token and expiry if they were updated
 		if client.GetJWT() != config.Termix.JWT || client.GetJWTExpiry() != config.Termix.JWTExpiry {
@@ -113,6 +65,50 @@ func LoadConfig() (*models.Config, error) {
 			config.Termix.JWTExpiry = client.GetJWTExpiry()
 			SaveConfig(config)
 		}
+	}
+
+	// PRIORITY 2: Load hosts from SSH config if enabled
+	if config.Sources.SSHConfigEnabled && config.SSH.Enabled {
+		sshHosts, err := ssh.LoadHostsFromSSHConfig()
+		if err == nil {
+			// Mark SSH config hosts
+			for i := range sshHosts {
+				sshHosts[i].Source = "ssh-config"
+			}
+			allHosts = append(allHosts, sshHosts...)
+		}
+	}
+
+	// PRIORITY 3: Load manual hosts if enabled (LOWEST PRIORITY)
+	if config.Sources.SSHBuddyEnabled {
+		for i := range config.Hosts {
+			if config.Hosts[i].Source == "" {
+				config.Hosts[i].Source = "manual"
+			}
+		}
+		allHosts = append(allHosts, config.Hosts...)
+	}
+
+	// Process all hosts: merge duplicates and track sources
+	for _, host := range allHosts {
+		if existing, found := hostMap[host.Alias]; found {
+			// Host already exists - add this source to AvailableIn
+			existing.AvailableIn = append(existing.AvailableIn, host.Source)
+		} else {
+			// New host - initialize AvailableIn with its source
+			host.AvailableIn = []string{host.Source}
+			hostMap[host.Alias] = &host
+		}
+	}
+
+	// Convert map back to slice
+	config.Hosts = make([]models.Host, 0, len(hostMap))
+	for _, host := range hostMap {
+		// Apply favorite status from saved config
+		if config.Favorites[host.Alias] {
+			host.Favorite = true
+		}
+		config.Hosts = append(config.Hosts, *host)
 	}
 
 	// Sort hosts: favorites first, then by alias

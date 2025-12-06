@@ -37,6 +37,48 @@ This displays all hosts from your configuration, including those from:
 - SSH config file
 - Termix API
 
+## Import from Termix
+
+Import hosts from your Termix server into your local manual configuration:
+
+```bash
+sshbuddy import termix
+```
+
+This command fetches all hosts from your Termix API and saves them as local manual hosts, allowing you to:
+- Keep a local copy of Termix hosts
+- Edit Termix hosts locally
+- Use Termix hosts even when offline
+- Migrate from Termix to SSHBuddy
+
+**Options:**
+```bash
+# Skip hosts that already exist locally
+sshbuddy import termix
+
+# Overwrite existing hosts with the same alias
+sshbuddy import termix --overwrite
+```
+
+**Example output:**
+```
+Connecting to Termix API at https://termix.example.com/api...
+Found 15 host(s) in Termix
+
+✓ Imported: Production Server (admin@prod.example.com)
+✓ Imported: Dev Server (dev@dev.example.com)
+✗ Skipped: Database Server (already exists, use --overwrite to replace)
+
+--- Import Summary ---
+Imported: 2
+Skipped:  1
+Total:    3
+```
+
+**Requirements:**
+- Termix integration must be configured (see [Data Sources](data-sources.md))
+- You must authenticate in the TUI at least once before using import
+
 ## Shell Completion
 
 SSHBuddy supports autocomplete for bash, zsh, and fish shells. This enables tab completion for:

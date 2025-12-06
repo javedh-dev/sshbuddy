@@ -73,19 +73,67 @@ Your Termix server must provide these endpoints:
 - `POST /users/login` - Authentication (returns JWT as cookie)
 - `GET /ssh/db/host` - Host list retrieval
 
+### Default Path Support
+
+SSHBuddy automatically imports the `defaultPath` field from Termix hosts. When you connect to a Termix host that has a default path configured, SSHBuddy will automatically navigate to that directory after establishing the connection.
+
+This seamless integration means your workflow preferences from Termix are preserved in SSHBuddy without any additional configuration.
+
+### Importing Termix Hosts to Local
+
+You can import hosts from Termix into your local manual configuration using the CLI:
+
+```bash
+# Import all Termix hosts as manual hosts
+sshbuddy import termix
+
+# Import and overwrite existing hosts with the same alias
+sshbuddy import termix --overwrite
+```
+
+**Why import?**
+- **Offline access**: Work with Termix hosts even when the API is unavailable
+- **Customization**: Edit imported hosts locally without affecting Termix
+- **Migration**: Gradually move from Termix to SSHBuddy
+- **Backup**: Keep a local copy of your Termix hosts
+
+**How it works:**
+1. Fetches all hosts from your configured Termix API
+2. Converts them to manual hosts (changing source from "termix" to "manual")
+3. Preserves all host details including default path, tags, and connection info
+4. Skips hosts that already exist locally (unless `--overwrite` is used)
+5. Saves the imported hosts to your config file
+
+For more details, see the [CLI Usage Guide](cli-usage.md#import-from-termix).
+
 ### Conflict Resolution
 
 Like SSH config, if a Termix host has the same alias as a manual or SSH config host, the local host takes precedence. This ensures your manual overrides are always respected.
 
 ## Source Priority
 
-When multiple sources define hosts with the same alias:
+When multiple sources define hosts with the same alias, SSHBuddy uses a priority system to determine which configuration "wins":
 
-1. **Manual hosts** (highest priority)
+1. **Termix hosts** (highest priority)
 2. **SSH Config hosts**
-3. **Termix hosts** (lowest priority)
+3. **Manual hosts** (lowest priority)
 
-This hierarchy ensures you can always override external sources with local customizations.
+This hierarchy ensures that your Termix (cloud) configuration takes precedence, with local SSH config as a fallback, and manual entries as the final option.
+
+**Multiple Source Display:**
+
+SSHBuddy now shows ALL sources where a host is available. For example, if you have a host named "production" defined in all three sources, you'll see:
+
+- Primary source indicated by the source name (e.g. "termix")
+- All source icons displayed together (e.g., ▲■◆)
+- A "+2" indicator showing it's available in 2 additional sources
+
+This transparency helps you understand where each host is configured and manage potential conflicts.
+
+**Example:**
+- `▲■◆ termix +2` - Host defined in Termix (active), also available in SSH Config and Manual
+- `▲■ termix +1` - Host defined in Termix (active), also available in SSH Config
+- `◆ sshbuddy` - Host only defined in manual configuration
 
 ## Disabling Sources
 

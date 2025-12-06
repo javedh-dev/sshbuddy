@@ -39,6 +39,7 @@ The `hosts` array contains all manually added SSH connections. Each host include
 - `tags`: Array of organizational tags
 - `identity_file`: Path to SSH private key
 - `proxy_jump`: Bastion host for jump connections
+- `default_path`: Default directory to cd into after connection (optional)
 - `source`: Always "manual" for manually added hosts
 
 ### Theme
@@ -135,6 +136,31 @@ Specify a non-standard SSH port in the "Port" field. Leave empty to use the defa
 
 **Example**: `2222` for a server running SSH on a custom port
 
+### Default Path
+
+Specify a default directory to automatically navigate to when connecting to a host. This is especially useful when you always work in a specific directory on a server.
+
+**Example**: `/var/www/html` or `~/projects/myapp`
+
+**How it works**: When you connect to a host with a default path configured, SSHBuddy uses `ssh -t` to allocate a pseudo-terminal and executes `cd 'default_path' && exec $SHELL -l` to:
+1. Change to the specified directory
+2. Start a new login shell in that directory
+3. Give you a fully interactive session
+
+**Use cases**:
+- Web developers who always work in `/var/www/html`
+- DevOps engineers who need to be in `/opt/applications`
+- Projects where code lives in a specific directory like `~/projects/microservices`
+
+**Manual entry**: When adding or editing a manual host, fill in the "Default Path" field with the desired directory path.
+
+**Termix integration**: If you use Termix, the default path is automatically imported from Termix's `defaultPath` field, so your existing Termix directory preferences are preserved.
+
+**Requirements**:
+- The directory must exist on the remote server
+- Your user must have permission to access the directory
+- If the directory doesn't exist, the connection will fail with an error
+
 ## Example Configuration
 
 Here's a complete config file showing various authentication methods:
@@ -149,14 +175,16 @@ Here's a complete config file showing various authentication methods:
       "port": "22",
       "tags": ["production", "web"],
       "identity_file": "~/.ssh/prod_key",
-      "proxy_jump": "bastion.example.com"
+      "proxy_jump": "bastion.example.com",
+      "default_path": "/var/www/html"
     },
     {
       "alias": "Dev Server",
       "hostname": "192.168.1.100",
       "user": "developer",
       "port": "2222",
-      "tags": ["development"]
+      "tags": ["development"],
+      "default_path": "~/projects/myapp"
     },
     {
       "alias": "Database Server",

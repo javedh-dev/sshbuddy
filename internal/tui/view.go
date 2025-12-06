@@ -66,6 +66,11 @@ func (m Model) View() string {
 		return m.renderConfigError()
 	}
 
+	if m.state == stateSourceSelect {
+		// Source selection dialog
+		return m.renderSourceSelect()
+	}
+
 	// ASCII art header
 	asciiArt := lipgloss.NewStyle().
 		Foreground(primaryColor).
@@ -108,7 +113,7 @@ func (m Model) View() string {
 	footer := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder(), true, false, false, false).
 		BorderForeground(borderColor).
-		Width(boxWidth - 4).
+		Width(boxWidth-4).
 		Padding(0, 0).
 		Render(lipgloss.JoinHorizontal(lipgloss.Left, keyBindings...))
 
@@ -258,7 +263,7 @@ func (m *Model) renderTwoColumnList() string {
 			}
 
 			// Source line - render with colors and favorite indicator
-			sourceLine := renderSource(itm.host.Source, itm.host.Favorite, columnWidth-2, isSelected)
+			sourceLine := renderSource(itm.host.Source, itm.host.AvailableIn, itm.host.Favorite, columnWidth-2, isSelected)
 
 			var titleLine, descLine string
 			if isSelected {
@@ -330,7 +335,7 @@ func (m *Model) renderTwoColumnList() string {
 		}
 
 		leftColumn = append(leftColumn, renderItemAtIndex(leftIdx))
-		
+
 		// Only add right column if there's an item for it
 		if rightIdx < len(items) {
 			rightColumn = append(rightColumn, renderItemAtIndex(rightIdx))
@@ -366,42 +371,69 @@ func (m *Model) renderTwoColumnList() string {
 	return listContent
 }
 
-// renderSource renders the source label with icons and favorite indicator
-func renderSource(source string, isFavorite bool, maxWidth int, isSelected bool) string {
-	if source == "" {
-		source = "sshbuddy"
+// renderSource renders the source label with icons for all available sources and favorite indicator
+func renderSource(primarySource string, availableIn []string, isFavorite bool, maxWidth int, isSelected bool) string {
+	if primarySource == "" {
+		primarySource = "manual"
 	}
 
-	// Map source names to display names and icons
-	var displayName string
-	var icon string
-
-	switch source {
-	case "manual", "sshbuddy":
-		icon = "◆" // Diamond for manual/sshbuddy
-		displayName = "sshbuddy"
-	case "ssh-config":
-		icon = "■" // Square for config file
-		displayName = "config"
-	case "termix":
-		icon = "▲" // Triangle for API/cloud
-		displayName = "termix"
-	default:
-		icon = "○"
-		displayName = source
+	// Helper to get icon for a source
+	getIcon := func(source string) string {
+		switch source {
+		case "manual", "sshbuddy":
+			return "◆" // Diamond for manual/sshbuddy
+		case "ssh-config":
+			return "■" // Square for config file
+		case "termix":
+			return "▲" // Triangle for API/cloud
+		default:
+			return "○"
+		}
 	}
 
-	// Use consistent dim color for all sources
+	// Helper to get display name
+	getDisplayName := func(source string) string {
+		switch source {
+		case "manual", "sshbuddy":
+			return "sshbuddy"
+		case "ssh-config":
+			return "config"
+		case "termix":
+			return "termix"
+		default:
+			return source
+		}
+	}
+
+	// Build the source display showing all sources
+	var sourceParts []string
+
+	if len(availableIn) == 0 {
+		// Fallback to primary source if AvailableIn is empty
+		icon := getIcon(primarySource)
+		displayName := getDisplayName(primarySource)
+		sourceParts = append(sourceParts, icon+" "+displayName)
+	} else {
+		// Show all sources with icon + name
+		for _, src := range availableIn {
+			icon := getIcon(src)
+			displayName := getDisplayName(src)
+			sourceParts = append(sourceParts, icon+" "+displayName)
+		}
+	}
+
+	// Join all source parts with spacing and apply consistent color
+	sourceText := strings.Join(sourceParts, "  ")
 	sourceStyle := lipgloss.NewStyle().Foreground(dimColor)
-	sourceText := icon + " " + displayName
+	sourceText = sourceStyle.Render(sourceText)
 
 	// Add filled heart icon for favorites beside source
 	if isFavorite {
 		favoriteIcon := lipgloss.NewStyle().Foreground(errorColor).Render(" ❤")
-		return sourceStyle.Render(sourceText) + favoriteIcon
+		return sourceText + favoriteIcon
 	}
 
-	return sourceStyle.Render(sourceText)
+	return sourceText
 }
 
 // renderDeleteConfirmation renders the delete confirmation dialog
@@ -554,6 +586,113 @@ func (m Model) renderConfigError() string {
 		BorderForeground(errorColor).
 		Padding(2, 4).
 		Width(70).
+		Render(content)
+
+	// Center on screen
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, dialog)
+}
+
+// renderSourceSelect renders the source selection dialog
+func (m Model) renderSourceSelect() string {
+	if m.pendingConnectHost == nil {
+		return ""
+	}
+
+	host := m.pendingConnectHost
+
+	// Title
+	titleText := lipgloss.NewStyle().
+		Foreground(primaryColor).
+		Bold(true).
+		Render("⚡ Select Source")
+
+	// Host info
+	hostInfo := lipgloss.NewStyle().
+		Foreground(textColor).
+		MarginTop(1).
+		MarginBottom(1).
+		Render(fmt.Sprintf("Host: %s (%s@%s)", host.Alias, host.User, host.Hostname))
+
+	// Instructions
+	instructions := lipgloss.NewStyle().
+		Foreground(mutedColor).
+		Italic(true).
+		Render("This host is available in multiple sources. Choose which one to use:")
+
+	// Source list
+	var sourceItems []string
+	for i, source := range host.AvailableIn {
+		// Get icon and name
+		var icon, name string
+		switch source {
+		case "termix":
+			icon = "▲"
+			name = "Termix"
+		case "ssh-config":
+			icon = "■"
+			name = "SSH Config"
+		case "manual", "sshbuddy":
+			icon = "◆"
+			name = "SSHBuddy"
+		default:
+			icon = "○"
+			name = source
+		}
+
+		// Format item
+		var item string
+		if i == m.selectedSourceIdx {
+			// Selected item - highlighted
+			item = lipgloss.NewStyle().
+				Foreground(primaryColor).
+				Bold(true).
+				Render(fmt.Sprintf("▸ %s %s", icon, name))
+		} else {
+			// Normal item
+			item = lipgloss.NewStyle().
+				Foreground(dimColor).
+				Render(fmt.Sprintf("  %s %s", icon, name))
+		}
+		sourceItems = append(sourceItems, item)
+	}
+
+	sourceList := lipgloss.NewStyle().
+		MarginTop(1).
+		MarginBottom(1).
+		Render(strings.Join(sourceItems, "\n"))
+
+	// Action buttons
+	enterButton := lipgloss.NewStyle().
+		Foreground(accentColor).
+		Bold(true).
+		Render("↵")
+
+	escButton := lipgloss.NewStyle().
+		Foreground(errorColor).
+		Bold(true).
+		Render("esc")
+
+	actions := lipgloss.NewStyle().
+		MarginTop(1).
+		Render(enterButton + descStyle.Render(" Connect  ") +
+			keyStyle.Render("↑↓") + descStyle.Render(" Navigate  ") +
+			escButton + descStyle.Render(" Cancel"))
+
+	// Combine all elements
+	content := lipgloss.JoinVertical(lipgloss.Left,
+		titleText,
+		hostInfo,
+		instructions,
+		sourceList,
+		actions,
+	)
+
+	// Wrap in a dialog box
+	dialog := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(primaryColor).
+		Padding(2, 4).
+		Width(60).
 		Render(content)
 
 	// Center on screen
