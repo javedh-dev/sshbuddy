@@ -28,7 +28,7 @@ _sshbuddy_completion() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     cmd="${COMP_WORDS[0]}"
-    commands="connect|c list|ls completion help"
+    commands="connect|c list|ls import export completion help"
 
     # Complete subcommands and flags
     if [ $COMP_CWORD -eq 1 ]; then
@@ -36,7 +36,7 @@ _sshbuddy_completion() {
         if [[ ${cur} == -* ]]; then
             COMPREPLY=( $(compgen -W "--version --help -v -h" -- ${cur}) )
         else
-            local expanded_commands="connect c list ls completion help"
+            local expanded_commands="connect c list ls import export completion help"
             COMPREPLY=( $(compgen -W "${expanded_commands}" -- ${cur}) )
         fi
         return 0
@@ -52,6 +52,30 @@ _sshbuddy_completion() {
             [ -n "$alias" ] && aliases+=("$alias")
         done < <($cmd list 2>/dev/null | tail -n +2)
         COMPREPLY=( $(compgen -W "$(printf '%%q\n' "${aliases[@]}")" -- ${cur}) )
+        return 0
+    fi
+
+    # Complete import sources
+    if [ "${prev}" == "import" ]; then
+        COMPREPLY=( $(compgen -W "termix ssh-config" -- ${cur}) )
+        return 0
+    fi
+    
+    # Complete export formats
+    if [ "${prev}" == "export" ]; then
+        COMPREPLY=( $(compgen -W "ssh-config" -- ${cur}) )
+        return 0
+    fi
+    
+    # Complete export flags
+    if [[ ${prev} == "ssh-config" && "${COMP_WORDS[COMP_CWORD-2]}" == "export" ]]; then
+        COMPREPLY=( $(compgen -W "--stdout --file" -- ${cur}) )
+        return 0
+    fi
+    
+    # Complete import flags
+    if [[ (${prev} == "termix" || ${prev} == "ssh-config") && "${COMP_WORDS[COMP_CWORD-2]}" == "import" ]]; then
+        COMPREPLY=( $(compgen -W "--overwrite" -- ${cur}) )
         return 0
     fi
 
@@ -83,6 +107,8 @@ _sshbuddy() {
             commands=(
                 {'connect','c'}':Connect to host by alias'
                 {'list','ls'}':List all configured hosts'
+                'import:Import hosts from external source'
+                'export:Export hosts to external format'
                 'completion:Generate shell completion script'
                 'help:Show help'
             )
@@ -98,6 +124,21 @@ _sshbuddy() {
                         [ -n "$alias" ] && hosts+=("${alias}")
                     done < <(sshbuddy list 2>/dev/null | tail -n +2)
                     _describe 'host aliases' hosts
+                    ;;
+                import)
+                    local -a sources
+                    sources=(
+                        'termix:Import from Termix API'
+                        'ssh-config:Import from SSH config file'
+                    )
+                    _describe 'source' sources
+                    ;;
+                export)
+                    local -a formats
+                    formats=(
+                        'ssh-config:Export to SSH config format'
+                    )
+                    _describe 'format' formats
                     ;;
                 completion)
                     local -a shells
@@ -131,11 +172,23 @@ complete -c sshbuddy -n "__fish_use_subcommand" -a "connect" -d "Connect to host
 complete -c sshbuddy -n "__fish_use_subcommand" -a "c" -d "Connect to host (or: connect)"
 complete -c sshbuddy -n "__fish_use_subcommand" -a "list" -d "List all hosts (or: ls)"
 complete -c sshbuddy -n "__fish_use_subcommand" -a "ls" -d "List all hosts (or: list)"
+complete -c sshbuddy -n "__fish_use_subcommand" -a "import" -d "Import hosts from external source"
+complete -c sshbuddy -n "__fish_use_subcommand" -a "export" -d "Export hosts to external format"
 complete -c sshbuddy -n "__fish_use_subcommand" -a "completion" -d "Generate shell completion script"
 complete -c sshbuddy -n "__fish_use_subcommand" -a "help" -d "Show help"
 
 # Complete aliases for connect/c command
 complete -c sshbuddy -n "__fish_seen_subcommand_from connect c" -a "(sshbuddy list 2>/dev/null | tail -n +2 | sed 's/^  *//' | sed 's/  .*//' | string escape)"
+
+# Import commands
+complete -c sshbuddy -n "__fish_seen_subcommand_from import" -a "termix" -d "Import from Termix API"
+complete -c sshbuddy -n "__fish_seen_subcommand_from import" -a "ssh-config" -d "Import from SSH config file"
+complete -c sshbuddy -n "__fish_seen_subcommand_from import; and __fish_seen_subcommand_from termix ssh-config" -l overwrite -d "Overwrite existing hosts"
+
+# Export commands
+complete -c sshbuddy -n "__fish_seen_subcommand_from export" -a "ssh-config" -d "Export to SSH config format"
+complete -c sshbuddy -n "__fish_seen_subcommand_from export; and __fish_seen_subcommand_from ssh-config" -l file -r -d "Write to specific file"
+complete -c sshbuddy -n "__fish_seen_subcommand_from export; and __fish_seen_subcommand_from ssh-config" -l stdout -d "Print to stdout"
 
 # Complete shell names for completion command
 complete -c sshbuddy -n "__fish_seen_subcommand_from completion" -a "install" -d "Auto-install for current shell"
