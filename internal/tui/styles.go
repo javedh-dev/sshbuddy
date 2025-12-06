@@ -7,83 +7,83 @@ import (
 // Theme represents a color scheme
 type Theme struct {
 	Name        string
-	Primary     lipgloss.Color
-	Accent      lipgloss.Color
-	Error       lipgloss.Color
-	Text        lipgloss.Color
-	Muted       lipgloss.Color
-	Dim         lipgloss.Color
-	Border      lipgloss.Color
-	PingingWarn lipgloss.Color
+	Primary     lipgloss.TerminalColor
+	Accent      lipgloss.TerminalColor
+	Error       lipgloss.TerminalColor
+	Text        lipgloss.TerminalColor
+	Muted       lipgloss.TerminalColor
+	Dim         lipgloss.TerminalColor
+	Border      lipgloss.TerminalColor
+	PingingWarn lipgloss.TerminalColor
 }
 
-// Available themes - optimized for both light and dark backgrounds
+// Available themes - optimized for both light and dark backgrounds via AdaptiveColor
 var themes = map[string]Theme{
 	"purple": {
 		Name:        "Purple Dream",
-		Primary:     lipgloss.Color("#7C3AED"), // Darker, more saturated purple
-		Accent:      lipgloss.Color("#2563EB"), // Blue accent
-		Error:       lipgloss.Color("#DC2626"), // Darker red
-		Text:        lipgloss.Color("#1F2937"), // Dark gray for text
-		Muted:       lipgloss.Color("#6B7280"), // Medium gray
-		Dim:         lipgloss.Color("#9CA3AF"), // Light gray
-		Border:      lipgloss.Color("#7C3AED"), // Match primary
-		PingingWarn: lipgloss.Color("#D97706"), // Darker amber
+		Primary:     lipgloss.AdaptiveColor{Light: "#7C3AED", Dark: "#A78BFA"}, // Purple
+		Accent:      lipgloss.AdaptiveColor{Light: "#2563EB", Dark: "#60A5FA"}, // Blue
+		Error:       lipgloss.AdaptiveColor{Light: "#DC2626", Dark: "#EF4444"}, // Red
+		Text:        lipgloss.AdaptiveColor{Light: "#1F2937", Dark: "#F3F4F6"}, // Dark Gray / Light Gray
+		Muted:       lipgloss.AdaptiveColor{Light: "#6B7280", Dark: "#9CA3AF"}, // Medium Gray / Lighter Gray
+		Dim:         lipgloss.AdaptiveColor{Light: "#9CA3AF", Dark: "#6B7280"}, // Light Gray / Darker Gray
+		Border:      lipgloss.AdaptiveColor{Light: "#7C3AED", Dark: "#8B5CF6"}, // Purple
+		PingingWarn: lipgloss.AdaptiveColor{Light: "#D97706", Dark: "#FBBF24"}, // Amber
 	},
 	"blue": {
 		Name:        "Ocean Blue",
-		Primary:     lipgloss.Color("#2563EB"), // Darker, more saturated blue
-		Accent:      lipgloss.Color("#0891B2"), // Cyan accent
-		Error:       lipgloss.Color("#DC2626"), // Darker red
-		Text:        lipgloss.Color("#1F2937"), // Dark gray for text
-		Muted:       lipgloss.Color("#6B7280"), // Medium gray
-		Dim:         lipgloss.Color("#9CA3AF"), // Light gray
-		Border:      lipgloss.Color("#2563EB"), // Match primary
-		PingingWarn: lipgloss.Color("#D97706"), // Darker amber
+		Primary:     lipgloss.AdaptiveColor{Light: "#2563EB", Dark: "#60A5FA"}, // Blue
+		Accent:      lipgloss.AdaptiveColor{Light: "#0891B2", Dark: "#22D3EE"}, // Cyan
+		Error:       lipgloss.AdaptiveColor{Light: "#DC2626", Dark: "#EF4444"}, // Red
+		Text:        lipgloss.AdaptiveColor{Light: "#1F2937", Dark: "#F3F4F6"},
+		Muted:       lipgloss.AdaptiveColor{Light: "#6B7280", Dark: "#9CA3AF"},
+		Dim:         lipgloss.AdaptiveColor{Light: "#9CA3AF", Dark: "#6B7280"},
+		Border:      lipgloss.AdaptiveColor{Light: "#2563EB", Dark: "#3B82F6"}, // Blue
+		PingingWarn: lipgloss.AdaptiveColor{Light: "#D97706", Dark: "#FBBF24"}, // Amber
 	},
 	"green": {
 		Name:        "Matrix Green",
-		Primary:     lipgloss.Color("#059669"), // Darker, more saturated green
-		Accent:      lipgloss.Color("#0891B2"), // Darker cyan
-		Error:       lipgloss.Color("#DC2626"), // Darker red
-		Text:        lipgloss.Color("#1F2937"), // Dark gray for text
-		Muted:       lipgloss.Color("#6B7280"), // Medium gray
-		Dim:         lipgloss.Color("#9CA3AF"), // Light gray
-		Border:      lipgloss.Color("#059669"), // Match primary
-		PingingWarn: lipgloss.Color("#D97706"), // Darker amber
+		Primary:     lipgloss.AdaptiveColor{Light: "#059669", Dark: "#34D399"}, // Green
+		Accent:      lipgloss.AdaptiveColor{Light: "#0891B2", Dark: "#22D3EE"}, // Cyan
+		Error:       lipgloss.AdaptiveColor{Light: "#DC2626", Dark: "#EF4444"}, // Red
+		Text:        lipgloss.AdaptiveColor{Light: "#1F2937", Dark: "#F3F4F6"},
+		Muted:       lipgloss.AdaptiveColor{Light: "#6B7280", Dark: "#9CA3AF"},
+		Dim:         lipgloss.AdaptiveColor{Light: "#9CA3AF", Dark: "#6B7280"},
+		Border:      lipgloss.AdaptiveColor{Light: "#059669", Dark: "#10B981"}, // Green
+		PingingWarn: lipgloss.AdaptiveColor{Light: "#D97706", Dark: "#FBBF24"}, // Amber
 	},
 	"pink": {
 		Name:        "Bubblegum Pink",
-		Primary:     lipgloss.Color("#DB2777"), // Darker, more saturated pink
-		Accent:      lipgloss.Color("#7C3AED"), // Darker purple
-		Error:       lipgloss.Color("#DC2626"), // Darker red
-		Text:        lipgloss.Color("#1F2937"), // Dark gray for text
-		Muted:       lipgloss.Color("#6B7280"), // Medium gray
-		Dim:         lipgloss.Color("#9CA3AF"), // Light gray
-		Border:      lipgloss.Color("#DB2777"), // Match primary
-		PingingWarn: lipgloss.Color("#D97706"), // Darker amber
+		Primary:     lipgloss.AdaptiveColor{Light: "#DB2777", Dark: "#F472B6"}, // Pink
+		Accent:      lipgloss.AdaptiveColor{Light: "#7C3AED", Dark: "#A78BFA"}, // Purple
+		Error:       lipgloss.AdaptiveColor{Light: "#DC2626", Dark: "#EF4444"}, // Red
+		Text:        lipgloss.AdaptiveColor{Light: "#1F2937", Dark: "#F3F4F6"},
+		Muted:       lipgloss.AdaptiveColor{Light: "#6B7280", Dark: "#9CA3AF"},
+		Dim:         lipgloss.AdaptiveColor{Light: "#9CA3AF", Dark: "#6B7280"},
+		Border:      lipgloss.AdaptiveColor{Light: "#DB2777", Dark: "#EC4899"}, // Pink
+		PingingWarn: lipgloss.AdaptiveColor{Light: "#D97706", Dark: "#FBBF24"}, // Amber
 	},
 	"amber": {
 		Name:        "Sunset Amber",
-		Primary:     lipgloss.Color("#D97706"), // Darker, more saturated amber
-		Accent:      lipgloss.Color("#DC2626"), // Red accent
-		Error:       lipgloss.Color("#DC2626"), // Darker red
-		Text:        lipgloss.Color("#1F2937"), // Dark gray for text
-		Muted:       lipgloss.Color("#6B7280"), // Medium gray
-		Dim:         lipgloss.Color("#9CA3AF"), // Light gray
-		Border:      lipgloss.Color("#D97706"), // Match primary
-		PingingWarn: lipgloss.Color("#D97706"), // Match primary
+		Primary:     lipgloss.AdaptiveColor{Light: "#D97706", Dark: "#FBBF24"}, // Amber
+		Accent:      lipgloss.AdaptiveColor{Light: "#DC2626", Dark: "#EF4444"}, // Red
+		Error:       lipgloss.AdaptiveColor{Light: "#DC2626", Dark: "#EF4444"}, // Red
+		Text:        lipgloss.AdaptiveColor{Light: "#1F2937", Dark: "#F3F4F6"},
+		Muted:       lipgloss.AdaptiveColor{Light: "#6B7280", Dark: "#9CA3AF"},
+		Dim:         lipgloss.AdaptiveColor{Light: "#9CA3AF", Dark: "#6B7280"},
+		Border:      lipgloss.AdaptiveColor{Light: "#D97706", Dark: "#F59E0B"}, // Amber
+		PingingWarn: lipgloss.AdaptiveColor{Light: "#D97706", Dark: "#F59E0B"}, // Amber
 	},
 	"cyan": {
 		Name:        "Cyber Cyan",
-		Primary:     lipgloss.Color("#0891B2"), // Darker, more saturated cyan
-		Accent:      lipgloss.Color("#7C3AED"), // Darker purple
-		Error:       lipgloss.Color("#DC2626"), // Darker red
-		Text:        lipgloss.Color("#1F2937"), // Dark gray for text
-		Muted:       lipgloss.Color("#6B7280"), // Medium gray
-		Dim:         lipgloss.Color("#9CA3AF"), // Light gray
-		Border:      lipgloss.Color("#0891B2"), // Match primary
-		PingingWarn: lipgloss.Color("#D97706"), // Darker amber
+		Primary:     lipgloss.AdaptiveColor{Light: "#0891B2", Dark: "#22D3EE"}, // Cyan
+		Accent:      lipgloss.AdaptiveColor{Light: "#7C3AED", Dark: "#A78BFA"}, // Purple
+		Error:       lipgloss.AdaptiveColor{Light: "#DC2626", Dark: "#EF4444"}, // Red
+		Text:        lipgloss.AdaptiveColor{Light: "#1F2937", Dark: "#F3F4F6"},
+		Muted:       lipgloss.AdaptiveColor{Light: "#6B7280", Dark: "#9CA3AF"},
+		Dim:         lipgloss.AdaptiveColor{Light: "#9CA3AF", Dark: "#6B7280"},
+		Border:      lipgloss.AdaptiveColor{Light: "#0891B2", Dark: "#06B6D4"}, // Cyan
+		PingingWarn: lipgloss.AdaptiveColor{Light: "#D97706", Dark: "#FBBF24"}, // Amber
 	},
 }
 
@@ -91,13 +91,13 @@ var currentTheme = themes["purple"]
 
 var (
 	// Minimal color palette
-	primaryColor   = currentTheme.Primary
-	accentColor    = currentTheme.Accent
-	errorColor     = currentTheme.Error
-	textColor      = currentTheme.Text
-	mutedColor     = currentTheme.Muted
-	dimColor       = currentTheme.Dim
-	borderColor    = currentTheme.Border
+	primaryColor = currentTheme.Primary
+	accentColor  = currentTheme.Accent
+	errorColor   = currentTheme.Error
+	textColor    = currentTheme.Text
+	mutedColor   = currentTheme.Muted
+	dimColor     = currentTheme.Dim
+	borderColor  = currentTheme.Border
 
 	// Clean title style
 	titleStyle = lipgloss.NewStyle().
@@ -149,16 +149,16 @@ var (
 
 	// Status indicator styles (text-based) - consistent across all themes
 	statusOnlineStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#10B981")) // Green
+				Foreground(lipgloss.AdaptiveColor{Light: "#059669", Dark: "#10B981"}) // Green
 
 	statusOfflineStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#EF4444")) // Red
+				Foreground(lipgloss.AdaptiveColor{Light: "#DC2626", Dark: "#EF4444"}) // Red
 
 	statusUnknownStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#9CA3AF")) // Gray
+				Foreground(lipgloss.AdaptiveColor{Light: "#4B5563", Dark: "#9CA3AF"}) // Gray
 
 	statusPingingStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#F59E0B")) // Yellow/Amber
+				Foreground(lipgloss.AdaptiveColor{Light: "#D97706", Dark: "#FBBF24"}) // Yellow/Amber
 )
 
 // ApplyTheme updates all styles with the selected theme
@@ -167,9 +167,9 @@ func ApplyTheme(themeName string) {
 	if !exists {
 		theme = themes["purple"] // Default fallback
 	}
-	
+
 	currentTheme = theme
-	
+
 	// Update color variables
 	primaryColor = theme.Primary
 	accentColor = theme.Accent
@@ -178,7 +178,7 @@ func ApplyTheme(themeName string) {
 	mutedColor = theme.Muted
 	dimColor = theme.Dim
 	borderColor = theme.Border
-	
+
 	// Update all styles
 	titleStyle = titleStyle.Foreground(primaryColor)
 	subtitleStyle = subtitleStyle.Foreground(mutedColor)
@@ -191,10 +191,10 @@ func ApplyTheme(themeName string) {
 	keyStyle = keyStyle.Foreground(primaryColor)
 	descStyle = descStyle.Foreground(dimColor)
 	// Status indicators remain consistent across themes
-	statusOnlineStyle = statusOnlineStyle.Foreground(lipgloss.Color("#10B981"))   // Green
-	statusOfflineStyle = statusOfflineStyle.Foreground(lipgloss.Color("#EF4444")) // Red
-	statusUnknownStyle = statusUnknownStyle.Foreground(lipgloss.Color("#9CA3AF")) // Gray
-	statusPingingStyle = statusPingingStyle.Foreground(lipgloss.Color("#F59E0B")) // Yellow/Amber
+	statusOnlineStyle = statusOnlineStyle.Foreground(lipgloss.AdaptiveColor{Light: "#059669", Dark: "#10B981"})
+	statusOfflineStyle = statusOfflineStyle.Foreground(lipgloss.AdaptiveColor{Light: "#DC2626", Dark: "#EF4444"})
+	statusUnknownStyle = statusUnknownStyle.Foreground(lipgloss.AdaptiveColor{Light: "#4B5563", Dark: "#9CA3AF"})
+	statusPingingStyle = statusPingingStyle.Foreground(lipgloss.AdaptiveColor{Light: "#D97706", Dark: "#FBBF24"})
 }
 
 // GetThemeNames returns a list of available theme names

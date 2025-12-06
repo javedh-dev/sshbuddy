@@ -408,7 +408,29 @@ func renderSource(primarySource string, availableIn []string, isFavorite bool, m
 	// Build the source display showing all sources
 	var sourceParts []string
 
-	if len(availableIn) == 0 {
+	// Check if available in all 3 main sources
+	hasTermix := false
+	hasSSH := false
+	hasManual := false
+	for _, src := range availableIn {
+		if src == "termix" {
+			hasTermix = true
+		}
+		if src == "ssh-config" {
+			hasSSH = true
+		}
+		if src == "manual" || src == "sshbuddy" {
+			hasManual = true
+		}
+	}
+
+	if hasTermix && hasSSH && hasManual {
+		// Show all icons + "All"
+		sourceParts = append(sourceParts, getIcon("termix"))
+		sourceParts = append(sourceParts, getIcon("ssh-config"))
+		sourceParts = append(sourceParts, getIcon("manual"))
+		sourceParts = append(sourceParts, "All")
+	} else if len(availableIn) == 0 {
 		// Fallback to primary source if AvailableIn is empty
 		icon := getIcon(primarySource)
 		displayName := getDisplayName(primarySource)
@@ -470,7 +492,7 @@ func (m Model) renderDeleteConfirmation() string {
 		Render("Y")
 
 	noButton := lipgloss.NewStyle().
-		Foreground(accentColor).
+		Foreground(textColor).
 		Bold(true).
 		Render("N")
 
